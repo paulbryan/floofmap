@@ -312,6 +312,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      blur_coordinate: { Args: { coord: number }; Returns: number }
       get_my_pending_invites: {
         Args: never
         Returns: {
@@ -320,6 +321,18 @@ export type Database = {
           id: string
           owner_user_id: string
           status: string
+        }[]
+      }
+      get_walk_track_points: {
+        Args: { p_walk_id: string }
+        Returns: {
+          accuracy_m: number
+          id: string
+          lat: number
+          lon: number
+          speed_mps: number
+          ts: string
+          walk_id: string
         }[]
       }
       has_walker_access: {
