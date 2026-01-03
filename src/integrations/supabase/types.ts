@@ -14,7 +14,258 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      community_pins: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          lat_blurred: number
+          lon_blurred: number
+          status: string | null
+          type: string
+          votes: number | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          lat_blurred: number
+          lon_blurred: number
+          status?: string | null
+          type: string
+          votes?: number | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          lat_blurred?: number
+          lon_blurred?: number
+          status?: string | null
+          type?: string
+          votes?: number | null
+        }
+        Relationships: []
+      }
+      dogs: {
+        Row: {
+          avatar_url: string | null
+          birthday: string | null
+          breed: string | null
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          birthday?: string | null
+          breed?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          birthday?: string | null
+          breed?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      poi_cache: {
+        Row: {
+          bbox_hash: string
+          category: string
+          data_json: Json
+          fetched_at: string
+          id: string
+        }
+        Insert: {
+          bbox_hash: string
+          category: string
+          data_json: Json
+          fetched_at?: string
+          id?: string
+        }
+        Update: {
+          bbox_hash?: string
+          category?: string
+          data_json?: Json
+          fetched_at?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      stop_events: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          id: string
+          label: string | null
+          lat: number
+          lon: number
+          radius_m: number | null
+          score: number | null
+          ts_end: string
+          ts_start: string
+          walk_id: string
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          label?: string | null
+          lat: number
+          lon: number
+          radius_m?: number | null
+          score?: number | null
+          ts_end: string
+          ts_start: string
+          walk_id: string
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          label?: string | null
+          lat?: number
+          lon?: number
+          radius_m?: number | null
+          score?: number | null
+          ts_end?: string
+          ts_start?: string
+          walk_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stop_events_walk_id_fkey"
+            columns: ["walk_id"]
+            isOneToOne: false
+            referencedRelation: "walks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      track_points: {
+        Row: {
+          accuracy_m: number | null
+          id: string
+          lat: number
+          lon: number
+          speed_mps: number | null
+          ts: string
+          walk_id: string
+        }
+        Insert: {
+          accuracy_m?: number | null
+          id?: string
+          lat: number
+          lon: number
+          speed_mps?: number | null
+          ts?: string
+          walk_id: string
+        }
+        Update: {
+          accuracy_m?: number | null
+          id?: string
+          lat?: number
+          lon?: number
+          speed_mps?: number | null
+          ts?: string
+          walk_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "track_points_walk_id_fkey"
+            columns: ["walk_id"]
+            isOneToOne: false
+            referencedRelation: "walks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      walks: {
+        Row: {
+          created_at: string
+          distance_m: number | null
+          dog_id: string | null
+          duration_s: number | null
+          ended_at: string | null
+          id: string
+          notes: string | null
+          sniff_time_s: number | null
+          started_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          distance_m?: number | null
+          dog_id?: string | null
+          duration_s?: number | null
+          ended_at?: string | null
+          id?: string
+          notes?: string | null
+          sniff_time_s?: number | null
+          started_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          distance_m?: number | null
+          dog_id?: string | null
+          duration_s?: number | null
+          ended_at?: string | null
+          id?: string
+          notes?: string | null
+          sniff_time_s?: number | null
+          started_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "walks_dog_id_fkey"
+            columns: ["dog_id"]
+            isOneToOne: false
+            referencedRelation: "dogs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
