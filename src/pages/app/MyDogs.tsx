@@ -207,11 +207,18 @@ const MyDogs = () => {
         status: "pending",
       });
 
-      if (error) throw error;
+      // Silently handle duplicate errors to prevent email enumeration
+      // Show generic success regardless of whether invite already exists
+      if (error && error.code !== '23505') {
+        // Only throw for non-duplicate errors
+        console.error("Invite error:", error.message);
+        throw new Error("Unable to send invite. Please try again.");
+      }
 
+      // Always show generic success message to prevent enumeration
       toast({
         title: "Invite sent! 📧",
-        description: `${walkerEmail} will see the invite when they sign in.`,
+        description: "The walker will see the invite when they sign in.",
       });
       
       setShowInviteWalker(false);
@@ -220,8 +227,8 @@ const MyDogs = () => {
       loadData();
     } catch (error: any) {
       toast({
-        title: "Error inviting walker",
-        description: error.message,
+        title: "Unable to send invite",
+        description: "Please try again later.",
         variant: "destructive",
       });
     } finally {
@@ -248,16 +255,16 @@ const MyDogs = () => {
 
       const { error } = await supabase.from("dog_walkers").insert(invites);
 
-      if (error) throw error;
+      // Silently handle duplicate errors to prevent email enumeration
+      if (error && error.code !== '23505') {
+        console.error("Bulk invite error:", error.message);
+        throw new Error("Unable to send invites. Please try again.");
+      }
 
-      const dogNames = dogs
-        .filter(d => selectedDogIds.includes(d.id))
-        .map(d => d.name)
-        .join(", ");
-
+      // Always show generic success message to prevent enumeration
       toast({
         title: "Invites sent! 📧",
-        description: `${walkerEmail} will see invites for ${dogNames} when they sign in.`,
+        description: "The walker will see the invites when they sign in.",
       });
       
       setShowBulkInvite(false);
@@ -266,8 +273,8 @@ const MyDogs = () => {
       loadData();
     } catch (error: any) {
       toast({
-        title: "Error inviting walker",
-        description: error.message,
+        title: "Unable to send invites",
+        description: "Please try again later.",
         variant: "destructive",
       });
     } finally {
