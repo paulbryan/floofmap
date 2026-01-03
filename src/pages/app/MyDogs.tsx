@@ -53,7 +53,7 @@ interface WalkerInvite {
   dog_id: string;
   owner_user_id: string;
   status: string;
-  dogs?: { name: string };
+  dog_name: string | null;
 }
 
 const MyDogs = () => {
@@ -293,7 +293,7 @@ const MyDogs = () => {
 
       toast({
         title: "Invite accepted! 🎉",
-        description: `You can now walk ${invite.dogs?.name || "this dog"}.`,
+        description: `You can now walk ${invite.dog_name || "this dog"}.`,
       });
       
       loadData();
@@ -392,7 +392,7 @@ const MyDogs = () => {
                 className="bg-card rounded-xl border border-border p-4"
               >
                 <p className="font-medium mb-2">
-                  You've been invited to walk {invite.dogs?.name || "a dog"}
+                  You've been invited to walk {invite.dog_name || "a dog"}
                 </p>
                 <div className="flex gap-2">
                   <Button
