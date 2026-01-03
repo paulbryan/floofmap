@@ -8,12 +8,12 @@ import {
 
 const faqs = [
   {
-    question: "What permissions does SniffMap need?",
-    answer: "SniffMap requires location access to record your walks. On Android, we request 'Allow all the time' for background tracking. On iOS, we use 'Always Allow' but note that iOS may pause background apps—we'll alert you if tracking stops.",
+    question: "What permissions does Floof Map need?",
+    answer: "Floof Map requires location access to record your walks. On Android, we request 'Allow all the time' for background tracking. On iOS, we use 'Always Allow' but note that iOS may pause background apps—we'll alert you if tracking stops.",
   },
   {
     question: "Does it work on iPhone with the app in the background?",
-    answer: "iOS has strict background location limits. SniffMap works best when the app is open. For longer walks, we recommend keeping the screen on with auto-lock disabled. We're working on solutions and will be transparent about any limitations.",
+    answer: "iOS has strict background location limits. Floof Map works best when the app is open. For longer walks, we recommend keeping the screen on with auto-lock disabled. We're working on solutions and will be transparent about any limitations.",
   },
   {
     question: "How accurate is the sniff detection?",
@@ -25,14 +25,14 @@ const faqs = [
   },
   {
     question: "What about my dog's safety on busy streets?",
-    answer: "Always prioritize real-world awareness over the app. SniffMap is designed to be used passively—just hit record and forget about it. Review your walks safely afterward at home.",
+    answer: "Always prioritize real-world awareness over the app. Floof Map is designed to be used passively—just hit record and forget about it. Review your walks safely afterward at home.",
   },
   {
     question: "How do barking zones work without targeting houses?",
     answer: "When you report a barking zone, we blur the location to a 30-50m radius centered on the nearest street segment. This helps walkers plan calmer routes without singling out any specific property.",
   },
   {
-    question: "Is SniffMap free?",
+    question: "Is Floof Map free?",
     answer: "Yes! The core features—GPS recording, sniff detection, POI discovery—are completely free with generous limits. We offer a Pro plan for power users who want unlimited history and advanced analytics.",
   },
 ];

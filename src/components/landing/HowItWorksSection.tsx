@@ -6,7 +6,7 @@ const steps = [
     number: "01",
     icon: Play,
     title: "Record Your Walk",
-    description: "Hit the record button and walk your dog as usual. SniffMap tracks your route with GPS precision in the background.",
+    description: "Hit the record button and walk your dog as usual. Floof Map tracks your route with GPS precision in the background.",
     color: "primary",
   },
   {
@@ -43,7 +43,7 @@ const HowItWorksSection = () => {
             Simple as a Walk in the Park
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Getting started with SniffMap takes just seconds. No complicated setup required.
+            Getting started with Floof Map takes just seconds. No complicated setup required.
           </p>
         </motion.div>
 

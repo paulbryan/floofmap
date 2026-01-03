@@ -15,7 +15,7 @@ const Footer = () => {
                 <MapPin className="w-6 h-6 text-white" />
               </div>
               <span className="text-2xl font-bold text-background">
-                Sniff<span className="text-amber-400">Map</span>
+                Floof<span className="text-amber-400">Map</span>
               </span>
             </Link>
             <p className="text-background/70 max-w-sm leading-relaxed">
@@ -38,7 +38,7 @@ const Footer = () => {
                 <Github className="w-5 h-5" />
               </a>
               <a
-                href="mailto:hello@sniffmap.app"
+                href="mailto:hello@floofmap.com"
                 className="w-10 h-10 rounded-lg bg-background/10 hover:bg-background/20 flex items-center justify-center transition-colors"
                 aria-label="Email"
               >
@@ -88,7 +88,7 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <a href="mailto:hello@sniffmap.app" className="text-background/70 hover:text-background transition-colors">
+                <a href="mailto:hello@floofmap.com" className="text-background/70 hover:text-background transition-colors">
                   Contact
                 </a>
               </li>
@@ -99,7 +99,7 @@ const Footer = () => {
         {/* Bottom */}
         <div className="pt-8 border-t border-background/10 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-sm text-background/50">
-            © {currentYear} SniffMap. Made with ❤️ for dogs everywhere.
+            © {currentYear} Floof Map. Made with ❤️ for dogs everywhere.
           </p>
           <div className="flex items-center gap-2 text-sm text-background/50">
             <span>🐕</span>

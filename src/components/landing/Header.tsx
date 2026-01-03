@@ -29,7 +29,7 @@ const Header = () => {
               />
             </div>
             <span className="text-xl md:text-2xl font-bold text-foreground">
-              Sniff<span className="text-gradient-primary">Map</span>
+              Floof<span className="text-gradient-primary">Map</span>
             </span>
           </Link>
 
