@@ -197,18 +197,22 @@ const MyDogs = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const { error } = await supabase.from("dog_walkers").insert({
+      // Use upsert to handle re-inviting previously revoked walkers
+      const { error } = await supabase.from("dog_walkers").upsert({
         dog_id: selectedDog.id,
         owner_user_id: user.id,
         walker_user_id: "00000000-0000-0000-0000-000000000000",
         walker_email: walkerEmail.toLowerCase(),
         status: "pending",
+        revoked_at: null,
+        accepted_at: null,
+      }, {
+        onConflict: "dog_id,walker_email",
+        ignoreDuplicates: false,
       });
 
-      // Silently handle duplicate errors to prevent email enumeration
-      // Show generic success regardless of whether invite already exists
-      if (error && error.code !== '23505') {
-        // Only throw for non-duplicate errors
+      // Silently handle errors to prevent email enumeration
+      if (error) {
         console.error("Invite error:", error.message);
         throw new Error("Unable to send invite. Please try again.");
       }
@@ -243,20 +247,28 @@ const MyDogs = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
+      // Use upsert to handle re-inviting previously revoked walkers
       const invites = selectedDogIds.map(dogId => ({
         dog_id: dogId,
         owner_user_id: user.id,
         walker_user_id: "00000000-0000-0000-0000-000000000000",
         walker_email: walkerEmail.toLowerCase(),
         status: "pending",
+        revoked_at: null,
+        accepted_at: null,
       }));
 
-      const { error } = await supabase.from("dog_walkers").insert(invites);
-
-      // Silently handle duplicate errors to prevent email enumeration
-      if (error && error.code !== '23505') {
-        console.error("Bulk invite error:", error.message);
-        throw new Error("Unable to send invites. Please try again.");
+      // Process invites one by one for upsert with conflict handling
+      for (const invite of invites) {
+        const { error } = await supabase.from("dog_walkers").upsert(invite, {
+          onConflict: "dog_id,walker_email",
+          ignoreDuplicates: false,
+        });
+        
+        if (error) {
+          console.error("Bulk invite error:", error.message);
+          throw new Error("Unable to send invites. Please try again.");
+        }
       }
 
       // Always show generic success message to prevent enumeration
