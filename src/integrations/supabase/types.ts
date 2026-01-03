@@ -312,6 +312,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_my_pending_invites: {
+        Args: never
+        Returns: {
+          dog_id: string
+          dog_name: string
+          id: string
+          owner_user_id: string
+          status: string
+        }[]
+      }
       has_walker_access: {
         Args: { p_dog_id: string; p_user_id: string }
         Returns: boolean

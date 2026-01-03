@@ -5,9 +5,8 @@ export interface PendingInvite {
   id: string;
   dog_id: string;
   owner_user_id: string;
-  walker_email: string;
   status: string;
-  dogs?: { name: string };
+  dog_name: string | null;
 }
 
 export const useDogWalkerInvites = () => {
@@ -17,17 +16,14 @@ export const useDogWalkerInvites = () => {
   const checkInvites = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user?.email) return;
+      if (!user) return;
 
-      // Find invites for this user's email that are still pending
-      const { data, error } = await supabase
-        .from("dog_walkers")
-        .select("id, dog_id, owner_user_id, walker_email, status, dogs(name)")
-        .eq("walker_email", user.email.toLowerCase())
-        .eq("status", "pending");
+      // Use secure RPC function to get pending invites
+      // This matches email server-side without exposing it to the client
+      const { data, error } = await supabase.rpc("get_my_pending_invites");
 
       if (error) throw error;
-      setPendingInvites((data as unknown as PendingInvite[]) || []);
+      setPendingInvites(data || []);
     } catch (error) {
       console.error("Error checking invites:", error);
     } finally {
