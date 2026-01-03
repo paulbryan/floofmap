@@ -313,6 +313,20 @@ export type Database = {
     }
     Functions: {
       blur_coordinate: { Args: { coord: number }; Returns: number }
+      get_dog_walkers_for_owner: {
+        Args: { p_owner_user_id: string }
+        Returns: {
+          accepted_at: string
+          created_at: string
+          dog_id: string
+          id: string
+          revoked_at: string
+          status: string
+          walker_avatar: string
+          walker_name: string
+          walker_user_id: string
+        }[]
+      }
       get_my_pending_invites: {
         Args: never
         Returns: {
