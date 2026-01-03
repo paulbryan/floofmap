@@ -10,6 +10,8 @@ import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
 import Demo from "./pages/Demo";
 import Pricing from "./pages/Pricing";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
 
 // App pages
@@ -18,6 +20,8 @@ import AppHome from "./pages/app/AppHome";
 import RecordWalk from "./pages/app/RecordWalk";
 import Explore from "./pages/app/Explore";
 import Profile from "./pages/app/Profile";
+import Settings from "./pages/app/Settings";
+import WalkDetail from "./pages/app/WalkDetail";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +38,8 @@ const App = () => (
           <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/demo" element={<Demo />} />
           <Route path="/pricing" element={<Pricing />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
           
           {/* Protected app routes */}
           <Route path="/app" element={<AppLayout />}>
@@ -41,6 +47,8 @@ const App = () => (
             <Route path="record" element={<RecordWalk />} />
             <Route path="explore" element={<Explore />} />
             <Route path="profile" element={<Profile />} />
+            <Route path="settings" element={<Settings />} />
+            <Route path="walk/:walkId" element={<WalkDetail />} />
           </Route>
           
           {/* Catch-all */}

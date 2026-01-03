@@ -136,7 +136,8 @@ const AppHome = () => {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3 + index * 0.1 }}
-              className="bg-card rounded-xl p-4 border border-border flex items-center gap-4 hover:shadow-card transition-shadow"
+              className="bg-card rounded-xl p-4 border border-border flex items-center gap-4 hover:shadow-card transition-shadow cursor-pointer"
+              onClick={() => {/* In production, navigate to /app/walk/{walkId} */}}
             >
               <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
                 <MapPin className="w-6 h-6 text-primary" />
