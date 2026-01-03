@@ -100,7 +100,7 @@ const PrivacySection = () => {
               <span className="text-gradient-forest">Privacy</span> in Mind
             </h2>
             <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-              We believe your walks are personal. SniffMap is designed from the ground up 
+              We believe your walks are personal. Floof Map is designed from the ground up 
               to respect your privacy while still delivering powerful features.
             </p>
             

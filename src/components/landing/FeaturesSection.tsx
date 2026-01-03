@@ -62,7 +62,7 @@ const FeaturesSection = () => {
             Everything Your Walk Needs
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            From GPS tracking to AI-powered insights, SniffMap has everything to make your dog walks more enjoyable and informative.
+            From GPS tracking to AI-powered insights, Floof Map has everything to make your dog walks more enjoyable and informative.
           </p>
         </motion.div>
 

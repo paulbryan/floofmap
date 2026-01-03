@@ -13,7 +13,7 @@ const testimonials = [
     name: "Marcus T.",
     role: "Professional Dog Walker",
     avatar: "👨",
-    content: "I walk 8+ dogs a day and SniffMap helps me track each one's preferences. The water fountain finder has been a lifesaver during summer walks!",
+    content: "I walk 8+ dogs a day and Floof Map helps me track each one's preferences. The water fountain finder has been a lifesaver during summer walks!",
     rating: 5,
   },
   {

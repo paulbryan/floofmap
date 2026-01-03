@@ -45,7 +45,7 @@ const Auth = () => {
           }
         } else {
           toast({
-            title: "Welcome to SniffMap! 🐕",
+            title: "Welcome to Floof Map! 🐕",
             description: "Your account has been created. Let's set up your dog profile!",
           });
           navigate("/onboarding");
@@ -136,7 +136,7 @@ const Auth = () => {
               <MapPin className="w-7 h-7 text-white" />
             </div>
             <span className="text-2xl font-bold">
-              Sniff<span className="text-gradient-primary">Map</span>
+              Floof<span className="text-gradient-primary">Map</span>
             </span>
           </div>
 

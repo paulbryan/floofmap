@@ -25,7 +25,7 @@ const AISection = () => {
               <span className="text-gradient-primary">Dog Behavior</span>
             </h2>
             <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-              SniffMap doesn't just track where you go—it understands what your dog does. 
+              Floof Map doesn't just track where you go—it understands what your dog does. 
               Our AI analyzes movement patterns to detect sniffing, waiting, and bathroom breaks, 
               giving you insights no other app can.
             </p>

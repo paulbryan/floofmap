@@ -142,7 +142,7 @@ const Pricing = () => {
                 <Link to="/#faq">View FAQ</Link>
               </Button>
               <Button variant="ghost" asChild>
-                <a href="mailto:hello@sniffmap.app">Contact Us</a>
+                <a href="mailto:hello@floofmap.com">Contact Us</a>
               </Button>
             </div>
           </motion.div>
