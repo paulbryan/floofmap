@@ -3,8 +3,21 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+
+// Pages
 import Index from "./pages/Index";
+import Auth from "./pages/Auth";
+import Onboarding from "./pages/Onboarding";
+import Demo from "./pages/Demo";
+import Pricing from "./pages/Pricing";
 import NotFound from "./pages/NotFound";
+
+// App pages
+import AppLayout from "./components/app/AppLayout";
+import AppHome from "./pages/app/AppHome";
+import RecordWalk from "./pages/app/RecordWalk";
+import Explore from "./pages/app/Explore";
+import Profile from "./pages/app/Profile";
 
 const queryClient = new QueryClient();
 
@@ -15,8 +28,22 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
+          {/* Public routes */}
           <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/onboarding" element={<Onboarding />} />
+          <Route path="/demo" element={<Demo />} />
+          <Route path="/pricing" element={<Pricing />} />
+          
+          {/* Protected app routes */}
+          <Route path="/app" element={<AppLayout />}>
+            <Route index element={<AppHome />} />
+            <Route path="record" element={<RecordWalk />} />
+            <Route path="explore" element={<Explore />} />
+            <Route path="profile" element={<Profile />} />
+          </Route>
+          
+          {/* Catch-all */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
