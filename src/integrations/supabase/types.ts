@@ -47,6 +47,50 @@ export type Database = {
         }
         Relationships: []
       }
+      dog_walkers: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          dog_id: string
+          id: string
+          owner_user_id: string
+          revoked_at: string | null
+          status: string
+          walker_email: string
+          walker_user_id: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          dog_id: string
+          id?: string
+          owner_user_id: string
+          revoked_at?: string | null
+          status?: string
+          walker_email: string
+          walker_user_id: string
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          dog_id?: string
+          id?: string
+          owner_user_id?: string
+          revoked_at?: string | null
+          status?: string
+          walker_email?: string
+          walker_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dog_walkers_dog_id_fkey"
+            columns: ["dog_id"]
+            isOneToOne: false
+            referencedRelation: "dogs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dogs: {
         Row: {
           avatar_url: string | null
@@ -268,7 +312,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_walker_access: {
+        Args: { p_dog_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      owns_dog: {
+        Args: { p_dog_id: string; p_user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
