@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
   Dog, Plus, ChevronRight, ArrowLeft, Loader2, 
-  UserPlus, Users, Trash2, Mail, Check, X 
+  UserPlus, Users, Trash2, Mail, Check, X, UsersRound 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +26,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -66,7 +67,9 @@ const MyDogs = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showAddDog, setShowAddDog] = useState(false);
   const [showInviteWalker, setShowInviteWalker] = useState(false);
+  const [showBulkInvite, setShowBulkInvite] = useState(false);
   const [selectedDog, setSelectedDog] = useState<DogProfile | null>(null);
+  const [selectedDogIds, setSelectedDogIds] = useState<string[]>([]);
   const [walkerToRemove, setWalkerToRemove] = useState<DogWalker | null>(null);
   
   // Form states
@@ -196,13 +199,10 @@ const MyDogs = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Check if there's a user with this email
-      // Note: We can't directly query auth.users, so we'll store the email
-      // and the walker will see the invite when they log in with that email
       const { error } = await supabase.from("dog_walkers").insert({
         dog_id: selectedDog.id,
         owner_user_id: user.id,
-        walker_user_id: "00000000-0000-0000-0000-000000000000", // Placeholder until accepted
+        walker_user_id: "00000000-0000-0000-0000-000000000000",
         walker_email: walkerEmail.toLowerCase(),
         status: "pending",
       });
@@ -217,6 +217,52 @@ const MyDogs = () => {
       setShowInviteWalker(false);
       setWalkerEmail("");
       setSelectedDog(null);
+      loadData();
+    } catch (error: any) {
+      toast({
+        title: "Error inviting walker",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleBulkInviteWalker = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (selectedDogIds.length === 0) return;
+    setIsSaving(true);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const invites = selectedDogIds.map(dogId => ({
+        dog_id: dogId,
+        owner_user_id: user.id,
+        walker_user_id: "00000000-0000-0000-0000-000000000000",
+        walker_email: walkerEmail.toLowerCase(),
+        status: "pending",
+      }));
+
+      const { error } = await supabase.from("dog_walkers").insert(invites);
+
+      if (error) throw error;
+
+      const dogNames = dogs
+        .filter(d => selectedDogIds.includes(d.id))
+        .map(d => d.name)
+        .join(", ");
+
+      toast({
+        title: "Invites sent! 📧",
+        description: `${walkerEmail} will see invites for ${dogNames} when they sign in.`,
+      });
+      
+      setShowBulkInvite(false);
+      setWalkerEmail("");
+      setSelectedDogIds([]);
       loadData();
     } catch (error: any) {
       toast({
@@ -380,6 +426,80 @@ const MyDogs = () => {
             <Dog className="w-5 h-5 text-primary" />
             Your Dogs
           </h2>
+        <div className="flex gap-2">
+          {dogs.length > 1 && (
+            <Dialog open={showBulkInvite} onOpenChange={(open) => {
+              setShowBulkInvite(open);
+              if (!open) {
+                setSelectedDogIds([]);
+                setWalkerEmail("");
+              }
+            }}>
+              <DialogTrigger asChild>
+                <Button size="sm" variant="outline" className="gap-1">
+                  <UsersRound className="w-4 h-4" />
+                  Share All
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Share Multiple Dogs</DialogTitle>
+                  <DialogDescription>
+                    Select which dogs to share with a dog walker
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleBulkInviteWalker} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Select Dogs</Label>
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {dogs.map(dog => (
+                        <div key={dog.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted">
+                          <Checkbox
+                            id={`dog-${dog.id}`}
+                            checked={selectedDogIds.includes(dog.id)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedDogIds([...selectedDogIds, dog.id]);
+                              } else {
+                                setSelectedDogIds(selectedDogIds.filter(id => id !== dog.id));
+                              }
+                            }}
+                          />
+                          <label htmlFor={`dog-${dog.id}`} className="flex items-center gap-2 cursor-pointer flex-1">
+                            <span className="text-lg">🐕</span>
+                            <span className="font-medium">{dog.name}</span>
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs"
+                      onClick={() => setSelectedDogIds(dogs.map(d => d.id))}
+                    >
+                      Select all
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="bulkWalkerEmail">Walker's Email</Label>
+                    <Input
+                      id="bulkWalkerEmail"
+                      type="email"
+                      value={walkerEmail}
+                      onChange={(e) => setWalkerEmail(e.target.value)}
+                      placeholder="dogwalker@example.com"
+                      required
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={isSaving || !walkerEmail || selectedDogIds.length === 0}>
+                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : `Send ${selectedDogIds.length} Invite${selectedDogIds.length !== 1 ? 's' : ''}`}
+                  </Button>
+                </form>
+              </DialogContent>
+            </Dialog>
+          )}
           <Dialog open={showAddDog} onOpenChange={setShowAddDog}>
             <DialogTrigger asChild>
               <Button size="sm" variant="outline" className="gap-1">
@@ -429,6 +549,7 @@ const MyDogs = () => {
               </form>
             </DialogContent>
           </Dialog>
+        </div>
         </div>
 
         {dogs.length === 0 ? (
