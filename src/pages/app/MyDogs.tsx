@@ -42,10 +42,11 @@ interface DogProfile {
 interface DogWalker {
   id: string;
   dog_id: string;
-  walker_email: string;
   walker_user_id: string;
   status: string;
   created_at: string;
+  walker_name: string | null;
+  walker_avatar: string | null;
 }
 
 interface WalkerInvite {
@@ -101,18 +102,15 @@ const MyDogs = () => {
       if (dogsError) throw dogsError;
       setDogs(myDogs || []);
 
-      // Load walkers for each dog
+      // Load walkers for each dog using secure RPC (excludes email addresses)
       const { data: walkerData, error: walkersError } = await supabase
-        .from("dog_walkers")
-        .select("*")
-        .eq("owner_user_id", user.id)
-        .neq("status", "revoked");
+        .rpc("get_dog_walkers_for_owner", { p_owner_user_id: user.id });
 
       if (!walkersError && walkerData) {
         const walkersByDog: Record<string, DogWalker[]> = {};
         walkerData.forEach((w) => {
           if (!walkersByDog[w.dog_id]) walkersByDog[w.dog_id] = [];
-          walkersByDog[w.dog_id].push(w);
+          walkersByDog[w.dog_id].push(w as DogWalker);
         });
         setWalkers(walkersByDog);
       }
@@ -630,7 +628,7 @@ const MyDogs = () => {
                     <div className="space-y-2">
                       {walkers[dog.id].map((walker) => (
                         <div key={walker.id} className="flex items-center justify-between">
-                          <span className="text-sm">{walker.walker_email}</span>
+                          <span className="text-sm">{walker.walker_name || "Pending invitation"}</span>
                           <div className="flex items-center gap-2">
                             <span className={`text-xs px-2 py-0.5 rounded-full ${
                               walker.status === "active" 
@@ -697,7 +695,7 @@ const MyDogs = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Remove Dog Walker?</AlertDialogTitle>
             <AlertDialogDescription>
-              {walkerToRemove?.walker_email} will no longer be able to see or record walks for this dog.
+              {walkerToRemove?.walker_name || "This walker"} will no longer be able to see or record walks for this dog.
               You will still be able to see all walks they recorded.
             </AlertDialogDescription>
           </AlertDialogHeader>
