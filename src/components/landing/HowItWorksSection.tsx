@@ -48,8 +48,8 @@ const HowItWorksSection = () => {
         </motion.div>
 
         <div className="relative max-w-5xl mx-auto">
-          {/* Connection line */}
-          <div className="hidden lg:block absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-primary via-secondary to-accent -translate-y-1/2" />
+          {/* Connection line - positioned to go through icon centers */}
+          <div className="hidden lg:block absolute top-10 left-[16.67%] right-[16.67%] h-1 bg-gradient-to-r from-primary via-secondary to-accent rounded-full opacity-30" />
           
           <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
             {steps.map((step, index) => (
@@ -61,24 +61,35 @@ const HowItWorksSection = () => {
                 transition={{ duration: 0.5, delay: index * 0.2 }}
                 className="relative text-center"
               >
-                {/* Step number badge */}
-                <div className={`relative z-10 w-20 h-20 mx-auto mb-6 rounded-2xl flex items-center justify-center shadow-lg ${
-                  step.color === "primary" ? "bg-gradient-hero" :
-                  step.color === "secondary" ? "bg-gradient-forest" :
-                  "bg-accent"
-                }`}>
-                  <step.icon className="w-10 h-10 text-primary-foreground" />
-                  <div className={`absolute -top-2 -right-2 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
-                    step.color === "primary" ? "bg-primary text-primary-foreground" :
-                    step.color === "secondary" ? "bg-secondary text-secondary-foreground" :
-                    "bg-accent text-accent-foreground"
+                {/* Icon container with number badge */}
+                <div className="relative z-10 w-20 h-20 mx-auto mb-8">
+                  <div className={`w-full h-full rounded-2xl flex items-center justify-center shadow-lg ${
+                    step.color === "primary" ? "bg-gradient-hero" :
+                    step.color === "secondary" ? "bg-gradient-forest" :
+                    "bg-accent"
+                  }`}>
+                    <step.icon className="w-10 h-10 text-primary-foreground" />
+                  </div>
+                  <div className={`absolute -top-2 -right-2 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shadow-md ${
+                    step.color === "primary" ? "bg-amber-600 text-white" :
+                    step.color === "secondary" ? "bg-forest-600 text-white" :
+                    "bg-sky-600 text-white"
                   }`}>
                     {step.number}
                   </div>
                 </div>
                 
-                <h3 className="text-xl md:text-2xl font-bold mb-3">{step.title}</h3>
-                <p className="text-muted-foreground leading-relaxed">{step.description}</p>
+                {/* Title with colored underline accent */}
+                <div className="mb-4">
+                  <h3 className="text-xl md:text-2xl font-bold mb-2">{step.title}</h3>
+                  <div className={`mx-auto w-16 h-1 rounded-full ${
+                    step.color === "primary" ? "bg-primary" :
+                    step.color === "secondary" ? "bg-secondary" :
+                    "bg-accent"
+                  }`} />
+                </div>
+                
+                <p className="text-muted-foreground leading-relaxed max-w-xs mx-auto">{step.description}</p>
               </motion.div>
             ))}
           </div>
