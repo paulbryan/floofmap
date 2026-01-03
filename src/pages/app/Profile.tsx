@@ -30,37 +30,31 @@ const Profile = () => {
     navigate("/");
   };
 
-  const handleExportData = () => {
-    toast({
-      title: "Export Started",
-      description: "Your data export will be ready shortly.",
-    });
-  };
 
   const menuItems = [
     {
       icon: Dog,
       label: "My Dogs",
       description: "Manage your dog profiles",
-      onClick: () => {},
+      onClick: () => navigate("/onboarding"),
     },
     {
       icon: Settings,
       label: "Settings",
       description: "App preferences and notifications",
-      onClick: () => {},
+      onClick: () => navigate("/app/settings"),
     },
     {
       icon: Shield,
       label: "Privacy",
       description: "Control your data and privacy settings",
-      onClick: () => {},
+      onClick: () => navigate("/privacy"),
     },
     {
       icon: Download,
       label: "Export Data",
       description: "Download all your walk data",
-      onClick: handleExportData,
+      onClick: () => navigate("/app/settings"),
     },
   ];
 
