@@ -92,11 +92,9 @@ const WalkDetail = () => {
         if (walkError) throw walkError;
         setWalk(walkData);
 
+        // Use secure RPC function that blurs start/end coordinates for walkers
         const { data: pointsData, error: pointsError } = await supabase
-          .from("track_points")
-          .select("*")
-          .eq("walk_id", walkId)
-          .order("ts", { ascending: true });
+          .rpc("get_walk_track_points", { p_walk_id: walkId });
 
         if (pointsError) throw pointsError;
         setTrackPoints(pointsData || []);
