@@ -1,8 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Square, Pause, MapPin, Timer, Route, Activity, AlertTriangle } from "lucide-react";
+import { Play, Square, Pause, MapPin, Timer, Route, Activity, AlertTriangle, Navigation } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import MapContainer from "@/components/map/MapContainer";
+import { useMapRoute } from "@/hooks/useMapRoute";
+import maplibregl from "maplibre-gl";
 
 interface TrackPoint {
   lat: number;
@@ -21,9 +24,12 @@ const RecordWalk = () => {
   const [trackPoints, setTrackPoints] = useState<TrackPoint[]>([]);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [distance, setDistance] = useState(0);
+  const [mapCenter, setMapCenter] = useState<[number, number]>([-0.09, 51.505]);
 
   const watchIdRef = useRef<number | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const mapRef = useRef<maplibregl.Map | null>(null);
+  const { setMap, addPoint, updateCurrentPosition, clearRoute } = useMapRoute();
 
   // Calculate distance between two points using Haversine formula
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
@@ -76,15 +82,27 @@ const RecordWalk = () => {
   // Handle position updates
   const handlePositionUpdate = useCallback((position: GeolocationPosition) => {
     setCurrentPosition(position);
+    const { latitude: lat, longitude: lon } = position.coords;
+    
+    // Update map center on first position
+    setMapCenter([lon, lat]);
+    
+    // Update current position marker on map
+    updateCurrentPosition({ lat, lon });
     
     if (isRecording && !isPaused) {
       const newPoint: TrackPoint = {
-        lat: position.coords.latitude,
-        lon: position.coords.longitude,
+        lat,
+        lon,
         timestamp: position.timestamp,
         accuracy: position.coords.accuracy,
         speed: position.coords.speed,
       };
+
+      // Add point to route on map
+      if (newPoint.accuracy < 30) {
+        addPoint({ lat, lon });
+      }
 
       setTrackPoints((prev) => {
         const updated = [...prev, newPoint];
@@ -107,7 +125,7 @@ const RecordWalk = () => {
         return updated;
       });
     }
-  }, [isRecording, isPaused]);
+  }, [isRecording, isPaused, updateCurrentPosition, addPoint]);
 
   // Handle position errors
   const handlePositionError = useCallback((error: GeolocationPositionError) => {
@@ -151,6 +169,45 @@ const RecordWalk = () => {
     }
   }, []);
 
+  // Handle map load
+  const handleMapLoad = useCallback((map: maplibregl.Map) => {
+    mapRef.current = map;
+    setMap(map);
+    
+    // Initialize route source
+    map.addSource('walk-route', {
+      type: 'geojson',
+      data: {
+        type: 'Feature',
+        properties: {},
+        geometry: { type: 'LineString', coordinates: [] },
+      },
+    });
+    
+    map.addLayer({
+      id: 'walk-route-layer',
+      type: 'line',
+      source: 'walk-route',
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: {
+        'line-color': '#F97316',
+        'line-width': 5,
+        'line-opacity': 0.9,
+      },
+    });
+  }, [setMap]);
+
+  // Center map on current position
+  const handleCenterMap = () => {
+    if (mapRef.current && currentPosition) {
+      mapRef.current.flyTo({
+        center: [currentPosition.coords.longitude, currentPosition.coords.latitude],
+        zoom: 17,
+        duration: 500,
+      });
+    }
+  };
+
   // Start recording
   const handleStart = () => {
     setIsRecording(true);
@@ -158,6 +215,7 @@ const RecordWalk = () => {
     setElapsedTime(0);
     setDistance(0);
     setTrackPoints([]);
+    clearRoute();
     startTracking();
 
     timerRef.current = setInterval(() => {
@@ -221,32 +279,26 @@ const RecordWalk = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Map placeholder */}
-      <div className="h-[50vh] bg-forest-100 relative overflow-hidden">
-        {/* Simplified map visualization */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center">
-            <motion.div
-              animate={isRecording ? { scale: [1, 1.1, 1] } : {}}
-              transition={{ duration: 1, repeat: Infinity }}
-              className={`w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center ${
-                isRecording ? "bg-primary shadow-glow" : "bg-muted"
-              }`}
-            >
-              <MapPin className={`w-10 h-10 ${isRecording ? "text-primary-foreground" : "text-muted-foreground"}`} />
-            </motion.div>
-            <p className="text-muted-foreground">
-              {currentPosition 
-                ? `${currentPosition.coords.latitude.toFixed(5)}, ${currentPosition.coords.longitude.toFixed(5)}`
-                : "Waiting for GPS..."}
-            </p>
-            {currentPosition && (
-              <p className="text-xs text-muted-foreground mt-1">
-                Accuracy: ±{Math.round(currentPosition.coords.accuracy)}m
-              </p>
-            )}
-          </div>
-        </div>
+      {/* Map */}
+      <div className="h-[50vh] relative overflow-hidden">
+        <MapContainer
+          className="h-full w-full"
+          center={mapCenter}
+          zoom={16}
+          onMapLoad={handleMapLoad}
+        />
+
+        {/* Center on location button */}
+        {currentPosition && (
+          <Button
+            onClick={handleCenterMap}
+            size="icon"
+            variant="secondary"
+            className="absolute bottom-4 right-4 z-10 shadow-lg"
+          >
+            <Navigation className="w-5 h-5" />
+          </Button>
+        )}
 
         {/* Status overlay */}
         <AnimatePresence>
@@ -255,7 +307,7 @@ const RecordWalk = () => {
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="absolute top-4 left-4 right-4 bg-card/95 backdrop-blur rounded-xl shadow-card p-3"
+              className="absolute top-4 left-4 right-14 bg-card/95 backdrop-blur rounded-xl shadow-card p-3 z-10"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -264,9 +316,12 @@ const RecordWalk = () => {
                     {isPaused ? "Paused" : "Recording"}
                   </span>
                 </div>
-                <span className="text-sm text-muted-foreground">
-                  {trackPoints.length} points
-                </span>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <span>{trackPoints.length} pts</span>
+                  {currentPosition && (
+                    <span>±{Math.round(currentPosition.coords.accuracy)}m</span>
+                  )}
+                </div>
               </div>
             </motion.div>
           )}
@@ -277,13 +332,13 @@ const RecordWalk = () => {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="absolute inset-0 bg-background/90 flex items-center justify-center p-4"
+            className="absolute inset-0 bg-background/90 flex items-center justify-center p-4 z-20"
           >
             <div className="bg-card rounded-xl shadow-xl p-6 max-w-sm text-center">
               <AlertTriangle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
               <h3 className="font-bold text-lg mb-2">Location Access Required</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                SniffMap needs location access to record your walks. Please enable it in your browser settings.
+                FloofMap needs location access to record your walks. Please enable it in your browser settings.
               </p>
               <Button onClick={() => window.location.reload()}>
                 Try Again
