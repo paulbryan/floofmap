@@ -35,8 +35,8 @@ const Profile = () => {
     {
       icon: Dog,
       label: "My Dogs",
-      description: "Manage your dog profiles",
-      onClick: () => navigate("/onboarding"),
+      description: "Manage your dogs & walkers",
+      onClick: () => navigate("/app/dogs"),
     },
     {
       icon: Settings,

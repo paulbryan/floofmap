@@ -22,6 +22,7 @@ import Explore from "./pages/app/Explore";
 import Profile from "./pages/app/Profile";
 import Settings from "./pages/app/Settings";
 import WalkDetail from "./pages/app/WalkDetail";
+import MyDogs from "./pages/app/MyDogs";
 
 const queryClient = new QueryClient();
 
@@ -49,6 +50,7 @@ const App = () => (
             <Route path="profile" element={<Profile />} />
             <Route path="settings" element={<Settings />} />
             <Route path="walk/:walkId" element={<WalkDetail />} />
+            <Route path="dogs" element={<MyDogs />} />
           </Route>
           
           {/* Catch-all */}
