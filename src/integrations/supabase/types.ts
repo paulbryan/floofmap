@@ -151,23 +151,32 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          cached_lat: number | null
+          cached_lon: number | null
           created_at: string
           full_name: string | null
           id: string
+          location_updated_at: string | null
           updated_at: string
         }
         Insert: {
           avatar_url?: string | null
+          cached_lat?: number | null
+          cached_lon?: number | null
           created_at?: string
           full_name?: string | null
           id: string
+          location_updated_at?: string | null
           updated_at?: string
         }
         Update: {
           avatar_url?: string | null
+          cached_lat?: number | null
+          cached_lon?: number | null
           created_at?: string
           full_name?: string | null
           id?: string
+          location_updated_at?: string | null
           updated_at?: string
         }
         Relationships: []
