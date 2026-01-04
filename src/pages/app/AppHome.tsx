@@ -6,12 +6,20 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow, startOfDay, subDays, isEqual, isBefore } from "date-fns";
 
-interface Walk {
+interface WalkBase {
   id: string;
   started_at: string;
   distance_m: number | null;
   duration_s: number | null;
   sniff_time_s: number | null;
+}
+
+interface Walk extends WalkBase {
+  dogs: {
+    id: string;
+    name: string;
+    avatar_url: string | null;
+  } | null;
 }
 
 interface Stats {
@@ -23,7 +31,7 @@ interface Stats {
 }
 
 // Calculate consecutive days streak from walk dates
-const calculateStreak = (walks: Walk[]): { streak: number; walkedToday: boolean } => {
+const calculateStreak = (walks: WalkBase[]): { streak: number; walkedToday: boolean } => {
   if (walks.length === 0) return { streak: 0, walkedToday: false };
 
   // Get unique days with walks (in local timezone)
@@ -95,7 +103,7 @@ const AppHome = () => {
         const [walksResult, allWalksResult, dogsResult] = await Promise.all([
           supabase
             .from("walks")
-            .select("id, started_at, distance_m, duration_s, sniff_time_s")
+            .select("id, started_at, distance_m, duration_s, sniff_time_s, dogs(id, name, avatar_url)")
             .eq("user_id", user.id)
             .order("started_at", { ascending: false })
             .limit(5),
@@ -371,20 +379,31 @@ const AppHome = () => {
                   className="bg-card rounded-xl p-4 border border-border flex items-center gap-4 hover:shadow-card transition-shadow cursor-pointer"
                   onClick={() => navigate(`/app/walk/${walk.id}`)}
                 >
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                    <MapPin className="w-6 h-6 text-primary" />
+                  <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center overflow-hidden shrink-0">
+                    {walk.dogs?.avatar_url ? (
+                      <img src={walk.dogs.avatar_url} alt={walk.dogs.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-xl">🐕</span>
+                    )}
                   </div>
-                  <div className="flex-1">
-                    <p className="font-medium">{formatWalkDate(walk.started_at)}</p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium truncate">{formatWalkDate(walk.started_at)}</p>
+                      {walk.dogs && (
+                        <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full truncate">
+                          {walk.dogs.name}
+                        </span>
+                      )}
+                    </div>
                     <p className="text-sm text-muted-foreground">
                       {formatDistance(walk.distance_m)} • {formatDuration(walk.duration_s)}
                     </p>
                   </div>
-                  <div className="text-right">
+                  <div className="text-right shrink-0">
                     <p className="font-semibold text-primary">{Math.round((walk.sniff_time_s || 0) / 60)}</p>
                     <p className="text-xs text-muted-foreground">sniff min</p>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                  <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0" />
                 </motion.div>
               ))}
             </motion.div>
