@@ -54,17 +54,31 @@ const Explore = () => {
     { key: "barking", icon: <span className="text-sm">🔊</span>, label: "Barking", color: "bg-destructive/10" },
   ];
 
-  // Get user location on mount
+  // Get user location on mount - use cached profile location first
   useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setMapCenter([pos.coords.longitude, pos.coords.latitude]);
-        },
-        () => {}, // Silently fail, will use default or walk data
-        { timeout: 5000, maximumAge: 60000 }
-      );
-    }
+    const loadLocation = async () => {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('cached_lat, cached_lon')
+        .single();
+      
+      if (profile?.cached_lat && profile?.cached_lon) {
+        setMapCenter([profile.cached_lon, profile.cached_lat]);
+        return;
+      }
+      
+      // Fallback to geolocation
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            setMapCenter([pos.coords.longitude, pos.coords.latitude]);
+          },
+          () => {},
+          { timeout: 5000, maximumAge: 60000 }
+        );
+      }
+    };
+    loadLocation();
   }, []);
 
   // Fetch walks on mount
