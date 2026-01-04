@@ -11,3 +11,6 @@ verify_jwt = true
 
 [functions.detect-stops]
 verify_jwt = true
+
+[functions.get-weather]
+verify_jwt = true
