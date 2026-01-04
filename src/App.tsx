@@ -20,7 +20,6 @@ import AppHome from "./pages/app/AppHome";
 import RecordWalk from "./pages/app/RecordWalk";
 import Explore from "./pages/app/Explore";
 import Profile from "./pages/app/Profile";
-import Settings from "./pages/app/Settings";
 import WalkDetail from "./pages/app/WalkDetail";
 import MyDogs from "./pages/app/MyDogs";
 
@@ -48,7 +47,7 @@ const App = () => (
             <Route path="record" element={<RecordWalk />} />
             <Route path="explore" element={<Explore />} />
             <Route path="profile" element={<Profile />} />
-            <Route path="settings" element={<Settings />} />
+            <Route path="settings" element={<Profile />} />
             <Route path="walk/:walkId" element={<WalkDetail />} />
             <Route path="dogs" element={<MyDogs />} />
           </Route>
