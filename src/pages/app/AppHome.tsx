@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Play, MapPin, TrendingUp, Calendar, Dog, ChevronRight, PlusCircle, Flame } from "lucide-react";
+import { Play, MapPin, TrendingUp, Calendar, ChevronRight, PlusCircle, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow, startOfDay, subDays, isEqual, isBefore } from "date-fns";
@@ -184,31 +184,13 @@ const AppHome = () => {
             </div>
           </motion.div>
 
-          {/* Quick Start Card */}
+          {/* Start Walk Button */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-card rounded-2xl shadow-card border border-border p-6 lg:p-8"
           >
-            <div className="flex items-center gap-4 lg:gap-6">
-              <div className="w-16 h-16 lg:w-20 lg:h-20 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 flex items-center justify-center shadow-lg">
-                <Dog className="w-8 h-8 lg:w-10 lg:h-10 text-white" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-lg lg:text-xl">Ready for a walk?</h3>
-                <p className="text-sm lg:text-base text-muted-foreground">
-                  Start recording to track your adventure
-                </p>
-              </div>
-              <Button variant="hero" size="lg" className="hidden lg:flex" asChild>
-                <Link to="/app/record">
-                  <Play className="w-5 h-5" />
-                  Start Walk
-                </Link>
-              </Button>
-            </div>
-            <Button variant="hero" size="lg" className="w-full mt-4 lg:hidden" asChild>
+            <Button variant="hero" size="lg" className="w-full sm:w-auto" asChild>
               <Link to="/app/record">
                 <Play className="w-5 h-5" />
                 Start Walk
