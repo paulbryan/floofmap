@@ -17,9 +17,14 @@ const DesktopSidebar = () => {
     <aside className="hidden lg:flex flex-col w-64 bg-card border-r border-border h-screen sticky top-0">
       {/* Logo */}
       <div className="p-6 border-b border-border">
-        <Link to="/app" className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 flex items-center justify-center shadow-md">
-            <span className="text-xl">🐾</span>
+        <Link to="/app" className="flex items-center gap-3 group">
+          <div className="relative w-10 h-10 rounded-xl bg-gradient-hero flex items-center justify-center shadow-md group-hover:shadow-glow transition-shadow duration-300">
+            <MapPin className="w-6 h-6 text-primary-foreground" />
+            <motion.div
+              className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-secondary"
+              animate={{ scale: [1, 1.2, 1] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            />
           </div>
           <span className="text-xl font-bold">FloofMap</span>
         </Link>
