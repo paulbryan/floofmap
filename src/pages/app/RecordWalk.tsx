@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Square, Pause, MapPin, Timer, Route, Activity, AlertTriangle, Navigation, Loader2 } from "lucide-react";
+import { Play, Square, Pause, MapPin, Timer, Route, Activity, AlertTriangle, Navigation, Loader2, Dog, PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import MapContainer from "@/components/map/MapContainer";
 import { useMapRoute } from "@/hooks/useMapRoute";
 import maplibregl from "maplibre-gl";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+
 interface TrackPoint {
   lat: number;
   lon: number;
@@ -28,6 +29,7 @@ const RecordWalk = () => {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [distance, setDistance] = useState(0);
   const [mapCenter, setMapCenter] = useState<[number, number]>([-0.09, 51.505]);
+  const [hasDogs, setHasDogs] = useState<boolean | null>(null);
 
   const watchIdRef = useRef<number | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -70,7 +72,7 @@ const RecordWalk = () => {
     return `${(meters / 1000).toFixed(2)}km`;
   };
 
-  // Check location permission
+  // Check location permission and dogs
   useEffect(() => {
     if ("permissions" in navigator) {
       navigator.permissions.query({ name: "geolocation" }).then((result) => {
@@ -80,6 +82,20 @@ const RecordWalk = () => {
         };
       });
     }
+
+    // Check if user has dogs
+    const checkDogs = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data } = await supabase
+          .from("dogs")
+          .select("id")
+          .eq("user_id", user.id)
+          .limit(1);
+        setHasDogs((data?.length ?? 0) > 0);
+      }
+    };
+    checkDogs();
   }, []);
 
   // Handle position updates
@@ -469,17 +485,36 @@ const RecordWalk = () => {
             </div>
 
             {/* Control buttons */}
-            <div className="flex items-center justify-center gap-4">
+            <div className="flex flex-col items-center gap-4">
               {!isRecording ? (
-                <Button
-                  onClick={handleStart}
-                  variant="hero"
-                  size="xl"
-                  className="w-full max-w-xs"
-                >
-                  <Play className="w-6 h-6" />
-                  Start Walk
-                </Button>
+                hasDogs === false ? (
+                  <div className="w-full max-w-xs text-center">
+                    <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 mb-4">
+                      <Dog className="w-10 h-10 text-amber-500 mx-auto mb-2" />
+                      <p className="text-sm font-medium mb-1">No dogs yet!</p>
+                      <p className="text-xs text-muted-foreground">
+                        Add your furry friend before starting a walk
+                      </p>
+                    </div>
+                    <Button variant="hero" size="lg" className="w-full" asChild>
+                      <Link to="/app/dogs">
+                        <PlusCircle className="w-5 h-5" />
+                        Add Your Dog
+                      </Link>
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    onClick={handleStart}
+                    variant="hero"
+                    size="xl"
+                    className="w-full max-w-xs"
+                    disabled={hasDogs === null}
+                  >
+                    <Play className="w-6 h-6" />
+                    Start Walk
+                  </Button>
+                )
               ) : (
                 <>
                   <Button
