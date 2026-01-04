@@ -271,17 +271,10 @@ const MyDogs = () => {
 
   const handleAcceptInvite = async (invite: WalkerInvite) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-
-      const { error } = await supabase
-        .from("dog_walkers")
-        .update({ 
-          status: "active", 
-          walker_user_id: user.id,
-          accepted_at: new Date().toISOString() 
-        })
-        .eq("id", invite.id);
+      // Use secure RPC function to accept invite
+      const { error } = await supabase.rpc("accept_dog_walker_invite", {
+        p_invite_id: invite.id,
+      });
 
       if (error) throw error;
 
@@ -290,7 +283,11 @@ const MyDogs = () => {
         description: `You can now walk ${invite.dog_name || "this dog"}.`,
       });
       
-      loadData();
+      // Immediate UI update - remove from pending list
+      setPendingInvites(prev => prev.filter(p => p.id !== invite.id));
+      
+      // Debounced full refresh to sync shared dogs
+      setTimeout(() => loadData(), 500);
     } catch (error: any) {
       toast({
         title: "Error accepting invite",
@@ -302,10 +299,10 @@ const MyDogs = () => {
 
   const handleDeclineInvite = async (invite: WalkerInvite) => {
     try {
-      const { error } = await supabase
-        .from("dog_walkers")
-        .delete()
-        .eq("id", invite.id);
+      // Use secure RPC function to decline invite
+      const { error } = await supabase.rpc("decline_dog_walker_invite", {
+        p_invite_id: invite.id,
+      });
 
       if (error) throw error;
 
@@ -313,7 +310,11 @@ const MyDogs = () => {
         title: "Invite declined",
       });
       
-      loadData();
+      // Immediate UI update - remove from pending list
+      setPendingInvites(prev => prev.filter(p => p.id !== invite.id));
+      
+      // Debounced refresh
+      setTimeout(() => loadData(), 500);
     } catch (error: any) {
       toast({
         title: "Error declining invite",
