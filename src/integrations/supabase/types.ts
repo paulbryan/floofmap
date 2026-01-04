@@ -56,7 +56,7 @@ export type Database = {
           owner_user_id: string
           revoked_at: string | null
           status: string
-          walker_email: string
+          walker_email: string | null
           walker_user_id: string
         }
         Insert: {
@@ -67,7 +67,7 @@ export type Database = {
           owner_user_id: string
           revoked_at?: string | null
           status?: string
-          walker_email: string
+          walker_email?: string | null
           walker_user_id: string
         }
         Update: {
@@ -78,7 +78,7 @@ export type Database = {
           owner_user_id?: string
           revoked_at?: string | null
           status?: string
-          walker_email?: string
+          walker_email?: string | null
           walker_user_id?: string
         }
         Relationships: [
