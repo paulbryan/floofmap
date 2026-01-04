@@ -2,11 +2,9 @@
 
 **Built for LovHack 2026**
 
-Floofmap was created during the LovHack 2026 online hackathon—a 48-hour event focused on building real web apps fast. As an official participant, this project was designed, built, and shipped in under two days as part of the LovHack challenge.
+[Floofmap](https://floofmap.com) was created during the [LovHack 2026](https://lovhack.dev/) online hackathon—a 48-hour event focused on building real web apps fast. As an official participant, this project was designed, built, and shipped in under two days as part of the [LovHack](https://lovhack.dev/) challenge.
 
-For more info about LovHack, see the [Official Participant Guide](https://lovable.dev/lovhack).
-
-Floofmap is a modern web application for dog walkers and pet lovers, built with Vite, React, TypeScript, Tailwind CSS, and Supabase.
+[Floofmap](https://floofmap.com) is a modern web application for dog walkers and pet lovers, built with Vite, React, TypeScript, Tailwind CSS, and [Supabase](https://supabase.com/).
 
 ## Project info
 
@@ -14,13 +12,13 @@ Floofmap is a modern web application for dog walkers and pet lovers, built with 
 
 <!-- **Lovable Project:** https://lovable.dev/projects/floofmap -->
 
-## How can I edit this code?
+<!-- ## How can I edit this code?
 
-There are several ways of editing your application.
+There are several ways of editing your application. -->
 
-**Use Lovable**
+<!-- **Use Lovable**
 
-Visit the [Floofmap Project on Lovable](https://lovable.dev/projects/floofmap) to prompt changes and deploy instantly. Changes made via Lovable are committed automatically to this repo.
+Visit the [Floofmap Project on Lovable](https://lovable.dev/projects/floofmap) to prompt changes and deploy instantly. Changes made via Lovable are committed automatically to this repo. -->
 
 **Use your preferred IDE**
 
@@ -71,7 +69,15 @@ This app uses a [Supabase](https://supabase.com/) database for backend, authenti
 2. Click **New project** and fill in the details (name, password, region).
 3. Wait for your project to be provisioned.
 
-### 2. Get Your Project Credentials
+### 2. Set Required Supabase Secrets
+
+You will need to add the following secrets to your Supabase project:
+
+- `RESEND_API_KEY` — Register at [Resend](https://resend.com/) to obtain your API key.
+- `OPENWEATHER_API_KEY` — Register at [OpenWeather](https://openweathermap.org/api) to obtain your API key.
+- `LOVABLE_API_KEY` — This is created automatically by Lovable when you deploy via Lovable.
+
+Add these secrets in the Supabase dashboard under **Project Settings > Secrets**.
 
 1. In your Supabase project dashboard, go to **Project Settings > API**.
 2. Copy your **Project URL** and **anon/public API key**.
@@ -125,4 +131,34 @@ Read more: [Setting up a custom domain](https://docs.lovable.dev/features/custom
 
 ---
 
-For more details, see the code in the `src/` and `supabase/` directories.
+
+## Code Structure
+
+The codebase is organized as follows:
+
+- **src/** — Main frontend source code
+   - **components/** — Shared React components
+      - **app/** — App layout, navigation, and authenticated app shell
+      - **landing/** — Landing page and marketing components
+      - **map/** — Map and geolocation UI components
+      - **ui/** — Reusable UI primitives (buttons, modals, etc.)
+   - **hooks/** — Custom React hooks (e.g., for mobile detection, toast notifications, Supabase integration)
+   - **integrations/supabase/** — Supabase client and helpers
+   - **lib/** — Utility functions and offline sync logic
+   - **pages/** — Top-level route components (e.g., Auth, Onboarding, Pricing, Terms, etc.)
+
+- **public/** — Static assets (icons, manifest, etc.)
+- **supabase/** — Supabase backend config, SQL migrations, and edge functions
+   - **functions/** — Supabase Edge Functions (serverless backend logic)
+   - **migrations/** — SQL migration scripts for the database
+
+### Major Components
+
+- **AppLayout** — Main authenticated app shell and navigation
+- **Map** — Interactive map, route drawing, and POI display
+- **NavLink** — Navigation link abstraction
+- **Onboarding** — User onboarding flow
+- **Auth** — Authentication and login/signup
+- **Demo** — Demo mode for exploring the app without an account
+
+See the folders above for more details on each area.
