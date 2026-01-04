@@ -4,7 +4,9 @@ Floofmap is a modern web application for dog walkers and pet lovers, built with 
 
 ## Project info
 
-**Live URL**: https://lovable.dev/projects/floofmap
+**Live Demo:** https://floofmap.com
+
+**Lovable Project:** https://lovable.dev/projects/floofmap
 
 ## How can I edit this code?
 
