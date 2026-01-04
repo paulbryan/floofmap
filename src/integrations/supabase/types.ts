@@ -337,6 +337,20 @@ export type Database = {
           status: string
         }[]
       }
+      get_owner_dog_sharing: {
+        Args: { p_owner_user_id: string }
+        Returns: {
+          accepted_at: string
+          created_at: string
+          dog_id: string
+          id: string
+          revoked_at: string
+          status: string
+          walker_avatar: string
+          walker_name: string
+          walker_user_id: string
+        }[]
+      }
       get_walk_track_points: {
         Args: { p_walk_id: string }
         Returns: {
