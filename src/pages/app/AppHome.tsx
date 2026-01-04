@@ -94,55 +94,60 @@ const AppHome = () => {
   useEffect(() => {
     const fetchData = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user?.email) {
-        setUserName(user.email.split("@")[0]);
-      }
+      if (!user) return;
 
-      if (user) {
-        // Fetch walks (more for streak calculation) and dogs in parallel
-        const [walksResult, allWalksResult, dogsResult] = await Promise.all([
-          supabase
-            .from("walks")
-            .select("id, started_at, distance_m, duration_s, sniff_time_s, dogs(id, name, avatar_url)")
-            .eq("user_id", user.id)
-            .order("started_at", { ascending: false })
-            .limit(5),
-          supabase
-            .from("walks")
-            .select("id, started_at, distance_m, duration_s, sniff_time_s")
-            .eq("user_id", user.id)
-            .order("started_at", { ascending: false })
-            .limit(100), // Get more walks for accurate streak calculation
-          supabase
-            .from("dogs")
-            .select("id")
-            .eq("user_id", user.id)
-            .limit(1)
-        ]);
+      // Fetch profile, walks, and dogs in parallel
+      const [profileResult, walksResult, allWalksResult, dogsResult] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("id", user.id)
+          .single(),
+        supabase
+          .from("walks")
+          .select("id, started_at, distance_m, duration_s, sniff_time_s, dogs(id, name, avatar_url)")
+          .eq("user_id", user.id)
+          .order("started_at", { ascending: false })
+          .limit(5),
+        supabase
+          .from("walks")
+          .select("id, started_at, distance_m, duration_s, sniff_time_s")
+          .eq("user_id", user.id)
+          .order("started_at", { ascending: false })
+          .limit(100),
+        supabase
+          .from("dogs")
+          .select("id")
+          .eq("user_id", user.id)
+          .limit(1)
+      ]);
 
-        const walks = walksResult.data;
-        const allWalks = allWalksResult.data || [];
-        setHasDogs((dogsResult.data?.length ?? 0) > 0);
+      // Set display name from profile or fallback to email
+      const displayName = profileResult.data?.full_name || user.email?.split("@")[0] || "";
+      setUserName(displayName);
 
-        if (walks) {
-          setRecentWalks(walks);
+      const walks = walksResult.data;
+      const allWalks = allWalksResult.data || [];
+      setHasDogs((dogsResult.data?.length ?? 0) > 0);
 
-          // Calculate stats from all walks
-          const totalDistance = allWalks.reduce((sum, w) => sum + (w.distance_m || 0), 0);
-          const totalSniffTime = allWalks.reduce((sum, w) => sum + (w.sniff_time_s || 0), 0);
-          const avgSniffs = allWalks.length > 0 ? Math.round(totalSniffTime / allWalks.length / 60) : 0;
-          const { streak, walkedToday } = calculateStreak(allWalks);
+      if (walks) {
+        setRecentWalks(walks);
 
-          setStats({
-            totalWalks: allWalks.length,
-            totalDistance: totalDistance >= 1000 
-              ? `${(totalDistance / 1000).toFixed(1)} km` 
-              : `${Math.round(totalDistance)} m`,
-            avgSniffs: avgSniffs,
-            streak,
-            walkedToday,
-          });
-        }
+        // Calculate stats from all walks
+        const totalDistance = allWalks.reduce((sum, w) => sum + (w.distance_m || 0), 0);
+        const totalSniffTime = allWalks.reduce((sum, w) => sum + (w.sniff_time_s || 0), 0);
+        const avgSniffs = allWalks.length > 0 ? Math.round(totalSniffTime / allWalks.length / 60) : 0;
+        const { streak, walkedToday } = calculateStreak(allWalks);
+
+        setStats({
+          totalWalks: allWalks.length,
+          totalDistance: totalDistance >= 1000 
+            ? `${(totalDistance / 1000).toFixed(1)} km` 
+            : `${Math.round(totalDistance)} m`,
+          avgSniffs: avgSniffs,
+          streak,
+          walkedToday,
+        });
       }
       setLoading(false);
     };
