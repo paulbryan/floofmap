@@ -73,12 +73,6 @@ This app uses a [Supabase](https://supabase.com/) database for backend, authenti
 
 You will need to add the following secrets to your Supabase project:
 
-- `RESEND_API_KEY` — Register at [Resend](https://resend.com/) to obtain your API key.
-- `OPENWEATHER_API_KEY` — Register at [OpenWeather](https://openweathermap.org/api) to obtain your API key.
-- `LOVABLE_API_KEY` — This is created automatically by Lovable when you deploy via Lovable.
-
-Add these secrets in the Supabase dashboard under **Project Settings > Secrets**.
-
 1. In your Supabase project dashboard, go to **Project Settings > API**.
 2. Copy your **Project URL** and **anon/public API key**.
 3. Create a `.env` file in the root of this repo and add:
@@ -131,26 +125,26 @@ Read more: [Setting up a custom domain](https://docs.lovable.dev/features/custom
 
 ---
 
-
 ## Code Structure
 
 The codebase is organized as follows:
 
 - **src/** — Main frontend source code
-   - **components/** — Shared React components
-      - **app/** — App layout, navigation, and authenticated app shell
-      - **landing/** — Landing page and marketing components
-      - **map/** — Map and geolocation UI components
-      - **ui/** — Reusable UI primitives (buttons, modals, etc.)
-   - **hooks/** — Custom React hooks (e.g., for mobile detection, toast notifications, Supabase integration)
-   - **integrations/supabase/** — Supabase client and helpers
-   - **lib/** — Utility functions and offline sync logic
-   - **pages/** — Top-level route components (e.g., Auth, Onboarding, Pricing, Terms, etc.)
+
+  - **components/** — Shared React components
+    - **app/** — App layout, navigation, and authenticated app shell
+    - **landing/** — Landing page and marketing components
+    - **map/** — Map and geolocation UI components
+    - **ui/** — Reusable UI primitives (buttons, modals, etc.)
+  - **hooks/** — Custom React hooks (e.g., for mobile detection, toast notifications, Supabase integration)
+  - **integrations/supabase/** — Supabase client and helpers
+  - **lib/** — Utility functions and offline sync logic
+  - **pages/** — Top-level route components (e.g., Auth, Onboarding, Pricing, Terms, etc.)
 
 - **public/** — Static assets (icons, manifest, etc.)
 - **supabase/** — Supabase backend config, SQL migrations, and edge functions
-   - **functions/** — Supabase Edge Functions (serverless backend logic)
-   - **migrations/** — SQL migration scripts for the database
+  - **functions/** — Supabase Edge Functions (serverless backend logic)
+  - **migrations/** — SQL migration scripts for the database
 
 ### Major Components
 
@@ -162,3 +156,31 @@ The codebase is organized as follows:
 - **Demo** — Demo mode for exploring the app without an account
 
 See the folders above for more details on each area.
+
+## Screenshots
+
+Below are screenshots of the app, in order of the user journey:
+
+### Homepage
+
+![Homepage](docs/homepage.png)
+
+### Sign In
+
+![Sign In](docs/signin.png)
+
+### Onboarding
+
+![Onboarding](docs/onboarding.png)
+
+### Profile
+
+![Profile](docs/profile.png)
+
+### Dashboard
+
+![Dashboard](docs/dashboard.png)
+
+### Start Walk
+
+![Start Walk](docs/start-walk.png)
