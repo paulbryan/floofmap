@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Play, MapPin, TrendingUp, Calendar, ChevronRight, PlusCircle, Flame, Cloud, Sun, CloudRain, CloudSnow, CloudLightning, CloudFog } from "lucide-react";
+import { Play, MapPin, TrendingUp, Calendar, ChevronRight, PlusCircle, Flame, Cloud, Sun, CloudRain, CloudSnow, CloudLightning, CloudFog, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow, startOfDay, subDays, isEqual, isBefore, format } from "date-fns";
@@ -122,6 +122,7 @@ const AppHome = () => {
   });
   const [loading, setLoading] = useState(true);
   const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [pendingInviteCount, setPendingInviteCount] = useState(0);
   const greeting = getGreeting();
   const navigate = useNavigate();
 
@@ -170,7 +171,7 @@ const AppHome = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const [profileResult, walksResult, allWalksResult, dogsResult] = await Promise.all([
+      const [profileResult, walksResult, allWalksResult, dogsResult, invitesResult] = await Promise.all([
         supabase
           .from("profiles")
           .select("full_name, cached_lat, cached_lon")
@@ -192,7 +193,8 @@ const AppHome = () => {
           .from("dogs")
           .select("id")
           .eq("user_id", user.id)
-          .limit(1)
+          .limit(1),
+        supabase.rpc("get_my_pending_invites")
       ]);
 
       const displayName = profileResult.data?.full_name || user.email?.split("@")[0] || "";
@@ -206,6 +208,7 @@ const AppHome = () => {
       const walks = walksResult.data;
       const allWalks = allWalksResult.data || [];
       setHasDogs((dogsResult.data?.length ?? 0) > 0);
+      setPendingInviteCount(invitesResult.data?.length ?? 0);
 
       if (walks) {
         setRecentWalks(walks);
@@ -308,6 +311,34 @@ const AppHome = () => {
               </Link>
             </Button>
           </motion.div>
+
+          {/* Pending Invites Banner */}
+          {pendingInviteCount > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              className="mt-4"
+            >
+              <Link
+                to="/app/dogs"
+                className="flex items-center gap-3 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 rounded-xl border border-blue-500/20 p-4 hover:border-blue-500/40 transition-colors"
+              >
+                <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center shrink-0">
+                  <Mail className="w-5 h-5 text-blue-500" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm">
+                    You have {pendingInviteCount} pending invite{pendingInviteCount > 1 ? 's' : ''}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Someone wants you to walk their dog!
+                  </p>
+                </div>
+                <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0" />
+              </Link>
+            </motion.div>
+          )}
         </div>
       </div>
 
