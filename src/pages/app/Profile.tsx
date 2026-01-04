@@ -501,26 +501,34 @@ const Profile = () => {
               </div>
             </motion.div>
 
-            {/* Danger Zone */}
+            {/* Account */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.25 }}
+            >
+              <h2 className="font-semibold mb-3">Account</h2>
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={handleSignOut}
+              >
+                <LogOut className="w-5 h-5 mr-2" />
+                Sign Out
+              </Button>
+            </motion.div>
+
+            {/* Danger Zone */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
             >
               <h2 className="font-semibold mb-3 flex items-center gap-2 text-destructive">
                 <AlertTriangle className="w-5 h-5" />
                 Danger Zone
               </h2>
               <div className="space-y-2">
-                <Button
-                  variant="outline"
-                  className="w-full justify-start border-destructive/30 text-destructive hover:bg-destructive/5"
-                  onClick={handleSignOut}
-                >
-                  <LogOut className="w-5 h-5 mr-2" />
-                  Sign Out
-                </Button>
-                
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button
