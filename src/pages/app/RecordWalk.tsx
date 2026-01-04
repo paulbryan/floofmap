@@ -362,171 +362,174 @@ const RecordWalk = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Map */}
-      <div className="h-[50vh] relative overflow-hidden">
-        <MapContainer
-          className="h-full w-full"
-          center={mapCenter}
-          zoom={16}
-          onMapLoad={handleMapLoad}
-        />
+      {/* Desktop layout wrapper */}
+      <div className="md:flex md:h-screen">
+        {/* Map */}
+        <div className="h-[50vh] md:h-full md:flex-1 relative overflow-hidden">
+          <MapContainer
+            className="h-full w-full"
+            center={mapCenter}
+            zoom={16}
+            onMapLoad={handleMapLoad}
+          />
 
-        {/* Center on location button */}
-        {currentPosition && (
-          <Button
-            onClick={handleCenterMap}
-            size="icon"
-            variant="secondary"
-            className="absolute bottom-4 right-4 z-10 shadow-lg"
-          >
-            <Navigation className="w-5 h-5" />
-          </Button>
-        )}
-
-        {/* Status overlay */}
-        <AnimatePresence>
-          {isRecording && (
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="absolute top-4 left-4 right-14 bg-card/95 backdrop-blur rounded-xl shadow-card p-3 z-10"
+          {/* Center on location button */}
+          {currentPosition && (
+            <Button
+              onClick={handleCenterMap}
+              size="icon"
+              variant="secondary"
+              className="absolute bottom-4 right-4 z-10 shadow-lg"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className={`w-3 h-3 rounded-full ${isPaused ? "bg-amber-500" : "bg-destructive animate-pulse"}`} />
-                  <span className="font-semibold text-sm">
-                    {isPaused ? "Paused" : "Recording"}
-                  </span>
+              <Navigation className="w-5 h-5" />
+            </Button>
+          )}
+
+          {/* Status overlay */}
+          <AnimatePresence>
+            {isRecording && (
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="absolute top-4 left-4 right-14 md:max-w-sm bg-card/95 backdrop-blur rounded-xl shadow-card p-3 z-10"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-3 h-3 rounded-full ${isPaused ? "bg-amber-500" : "bg-destructive animate-pulse"}`} />
+                    <span className="font-semibold text-sm">
+                      {isPaused ? "Paused" : "Recording"}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span>{trackPoints.length} pts</span>
+                    {currentPosition && (
+                      <span>±{Math.round(currentPosition.coords.accuracy)}m</span>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <span>{trackPoints.length} pts</span>
-                  {currentPosition && (
-                    <span>±{Math.round(currentPosition.coords.accuracy)}m</span>
-                  )}
-                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Permission warning */}
+          {permissionStatus === "denied" && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="absolute inset-0 bg-background/90 flex items-center justify-center p-4 z-20"
+            >
+              <div className="bg-card rounded-xl shadow-xl p-6 max-w-sm text-center">
+                <AlertTriangle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
+                <h3 className="font-bold text-lg mb-2">Location Access Required</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  FloofMap needs location access to record your walks. Please enable it in your browser settings.
+                </p>
+                <Button onClick={() => window.location.reload()}>
+                  Try Again
+                </Button>
               </div>
             </motion.div>
           )}
-        </AnimatePresence>
-
-        {/* Permission warning */}
-        {permissionStatus === "denied" && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="absolute inset-0 bg-background/90 flex items-center justify-center p-4 z-20"
-          >
-            <div className="bg-card rounded-xl shadow-xl p-6 max-w-sm text-center">
-              <AlertTriangle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
-              <h3 className="font-bold text-lg mb-2">Location Access Required</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                FloofMap needs location access to record your walks. Please enable it in your browser settings.
-              </p>
-              <Button onClick={() => window.location.reload()}>
-                Try Again
-              </Button>
-            </div>
-          </motion.div>
-        )}
-      </div>
-
-      {/* Stats panel */}
-      <motion.div
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        className="bg-card border-t border-border rounded-t-3xl -mt-6 relative z-10 shadow-xl"
-      >
-        <div className="p-6">
-          {/* Main stats */}
-          <div className="grid grid-cols-3 gap-4 mb-6">
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
-                <Timer className="w-4 h-4" />
-                <span className="text-xs">Duration</span>
-              </div>
-              <p className="text-2xl font-bold">{formatTime(elapsedTime)}</p>
-            </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
-                <Route className="w-4 h-4" />
-                <span className="text-xs">Distance</span>
-              </div>
-              <p className="text-2xl font-bold text-primary">{formatDistance(distance)}</p>
-            </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
-                <Activity className="w-4 h-4" />
-                <span className="text-xs">Pace</span>
-              </div>
-              <p className="text-2xl font-bold">
-                {pace > 0 ? `${pace.toFixed(1)}` : "--"}
-                <span className="text-sm text-muted-foreground">/km</span>
-              </p>
-            </div>
-          </div>
-
-          {/* Control buttons */}
-          <div className="flex items-center justify-center gap-4">
-            {!isRecording ? (
-              <Button
-                onClick={handleStart}
-                variant="hero"
-                size="xl"
-                className="w-full max-w-xs"
-              >
-                <Play className="w-6 h-6" />
-                Start Walk
-              </Button>
-            ) : (
-              <>
-                <Button
-                  onClick={isPaused ? handleResume : handlePause}
-                  variant="outline"
-                  size="lg"
-                  className="flex-1"
-                >
-                  {isPaused ? (
-                    <>
-                      <Play className="w-5 h-5" />
-                      Resume
-                    </>
-                  ) : (
-                    <>
-                      <Pause className="w-5 h-5" />
-                      Pause
-                    </>
-                  )}
-                </Button>
-                <Button
-                  onClick={handleStop}
-                  variant="destructive"
-                  size="lg"
-                  className="flex-1"
-                  disabled={isSaving}
-                >
-                  {isSaving ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Square className="w-5 h-5" />
-                      Stop
-                    </>
-                  )}
-                </Button>
-              </>
-            )}
-          </div>
-
-          {/* iOS warning */}
-          <p className="text-xs text-center text-muted-foreground mt-4">
-            📱 For best results on iOS, keep the app open during your walk.
-          </p>
         </div>
-      </motion.div>
+
+        {/* Stats panel */}
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          className="bg-card border-t md:border-t-0 md:border-l border-border rounded-t-3xl md:rounded-none -mt-6 md:mt-0 relative z-10 shadow-xl md:shadow-none md:w-80 lg:w-96 md:flex md:flex-col md:justify-center"
+        >
+          <div className="p-6 md:p-8">
+            {/* Main stats */}
+            <div className="grid grid-cols-3 gap-4 mb-6 md:mb-8">
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
+                  <Timer className="w-4 h-4" />
+                  <span className="text-xs">Duration</span>
+                </div>
+                <p className="text-2xl md:text-3xl font-bold">{formatTime(elapsedTime)}</p>
+              </div>
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
+                  <Route className="w-4 h-4" />
+                  <span className="text-xs">Distance</span>
+                </div>
+                <p className="text-2xl md:text-3xl font-bold text-primary">{formatDistance(distance)}</p>
+              </div>
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
+                  <Activity className="w-4 h-4" />
+                  <span className="text-xs">Pace</span>
+                </div>
+                <p className="text-2xl md:text-3xl font-bold">
+                  {pace > 0 ? `${pace.toFixed(1)}` : "--"}
+                  <span className="text-sm text-muted-foreground">/km</span>
+                </p>
+              </div>
+            </div>
+
+            {/* Control buttons */}
+            <div className="flex items-center justify-center gap-4">
+              {!isRecording ? (
+                <Button
+                  onClick={handleStart}
+                  variant="hero"
+                  size="xl"
+                  className="w-full max-w-xs"
+                >
+                  <Play className="w-6 h-6" />
+                  Start Walk
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    onClick={isPaused ? handleResume : handlePause}
+                    variant="outline"
+                    size="lg"
+                    className="flex-1"
+                  >
+                    {isPaused ? (
+                      <>
+                        <Play className="w-5 h-5" />
+                        Resume
+                      </>
+                    ) : (
+                      <>
+                        <Pause className="w-5 h-5" />
+                        Pause
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    onClick={handleStop}
+                    variant="destructive"
+                    size="lg"
+                    className="flex-1"
+                    disabled={isSaving}
+                  >
+                    {isSaving ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Square className="w-5 h-5" />
+                        Stop
+                      </>
+                    )}
+                  </Button>
+                </>
+              )}
+            </div>
+
+            {/* iOS warning */}
+            <p className="text-xs text-center text-muted-foreground mt-4">
+              📱 For best results on iOS, keep the app open during your walk.
+            </p>
+          </div>
+        </motion.div>
+      </div>
     </div>
   );
 };
