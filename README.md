@@ -1,12 +1,18 @@
 # Floofmap
 
+**Built for LovHack 2026**
+
+Floofmap was created during the LovHack 2026 online hackathon—a 48-hour event focused on building real web apps fast. As an official participant, this project was designed, built, and shipped in under two days as part of the LovHack challenge.
+
+For more info about LovHack, see the [Official Participant Guide](https://lovable.dev/lovhack).
+
 Floofmap is a modern web application for dog walkers and pet lovers, built with Vite, React, TypeScript, Tailwind CSS, and Supabase.
 
 ## Project info
 
 **Live Demo:** https://floofmap.com
 
-**Lovable Project:** https://lovable.dev/projects/floofmap
+<!-- **Lovable Project:** https://lovable.dev/projects/floofmap -->
 
 ## How can I edit this code?
 
