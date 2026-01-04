@@ -89,8 +89,9 @@ const RecordWalk = () => {
 
   // Check location permission, get initial location, and fetch dogs
   useEffect(() => {
-    // Get initial location - use cached profile first, then geolocation
+    // Get initial location - use cached profile first for instant map render, then update with GPS
     const loadInitialLocation = async () => {
+      // Load cached location first for instant map render
       const { data: profile } = await supabase
         .from('profiles')
         .select('cached_lat, cached_lon')
@@ -100,7 +101,7 @@ const RecordWalk = () => {
         setMapCenter([profile.cached_lon, profile.cached_lat]);
       }
       
-      // Always try geolocation for current position (for recording)
+      // Then get actual GPS location (updates map center + sets currentPosition for recording)
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (pos) => {

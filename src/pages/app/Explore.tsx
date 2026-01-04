@@ -54,9 +54,10 @@ const Explore = () => {
     { key: "barking", icon: <span className="text-sm">🔊</span>, label: "Barking", color: "bg-destructive/10" },
   ];
 
-  // Get user location on mount - use cached profile location first
+  // Get user location on mount - use cached profile location first, then update with GPS
   useEffect(() => {
     const loadLocation = async () => {
+      // Load cached location first for instant map render
       const { data: profile } = await supabase
         .from('profiles')
         .select('cached_lat, cached_lon')
@@ -64,10 +65,9 @@ const Explore = () => {
       
       if (profile?.cached_lat && profile?.cached_lon) {
         setMapCenter([profile.cached_lon, profile.cached_lat]);
-        return;
       }
       
-      // Fallback to geolocation
+      // Then get actual GPS location (will update map center when available)
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (pos) => {
