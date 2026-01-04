@@ -9,10 +9,10 @@ import {
   MapPin,
   Timer,
   Route,
-  ChevronRight,
   Download,
   Trash2,
   Loader2,
+  Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -31,6 +31,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface TrackPoint {
   id: string;
@@ -349,6 +354,42 @@ ${trackPoints.map(p => `      <trkpt lat="${p.lat}" lon="${p.lon}">
     });
   };
 
+  const handleLabelChange = async (stopId: string, newLabel: string) => {
+    try {
+      const { error } = await supabase
+        .from("stop_events")
+        .update({ label: newLabel })
+        .eq("id", stopId);
+
+      if (error) throw error;
+
+      setStopEvents(prev =>
+        prev.map(stop =>
+          stop.id === stopId ? { ...stop, label: newLabel } : stop
+        )
+      );
+
+      toast({
+        title: "Label Updated",
+        description: `Stop marked as ${newLabel}.`,
+      });
+    } catch (error) {
+      console.error("Error updating label:", error);
+      toast({
+        title: "Error",
+        description: "Could not update the label.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const labelOptions = [
+    { value: "sniff", label: "Sniff", emoji: "🐾" },
+    { value: "wait", label: "Wait", emoji: "⏸️" },
+    { value: "pee", label: "Pee", emoji: "💧" },
+    { value: "poop", label: "Poop", emoji: "💩" },
+  ];
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -539,30 +580,54 @@ ${trackPoints.map(p => `      <trkpt lat="${p.lat}" lon="${p.lon}">
           {stopEvents.length > 0 && (
             <>
               <h3 className="font-semibold mb-3">Sniff Stops</h3>
+              <p className="text-xs text-muted-foreground mb-3">Tap to change label</p>
               <div className="space-y-2">
                 {stopEvents.map((stop, i) => (
-                  <motion.div
-                    key={stop.id}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.05 * i }}
-                    className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl"
-                  >
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${getStopBgColor(stop.label)}`}>
-                      <span className="text-lg">{getStopEmoji(stop.label)}</span>
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium">{stop.label || "Sniff"}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {getDuration(stop.ts_start, stop.ts_end)} •{" "}
-                        {new Date(stop.ts_start).toLocaleTimeString("en-US", {
-                          hour: "numeric",
-                          minute: "2-digit",
-                        })}
-                      </p>
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                  </motion.div>
+                  <Popover key={stop.id}>
+                    <PopoverTrigger asChild>
+                      <motion.div
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.05 * i }}
+                        className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl cursor-pointer hover:bg-muted transition-colors"
+                      >
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${getStopBgColor(stop.label)}`}>
+                          <span className="text-lg">{getStopEmoji(stop.label)}</span>
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium capitalize">{stop.label || "Sniff"}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {getDuration(stop.ts_start, stop.ts_end)} •{" "}
+                            {new Date(stop.ts_start).toLocaleTimeString("en-US", {
+                              hour: "numeric",
+                              minute: "2-digit",
+                            })}
+                          </p>
+                        </div>
+                      </motion.div>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-48 p-2" align="end">
+                      <div className="space-y-1">
+                        {labelOptions.map((option) => (
+                          <button
+                            key={option.value}
+                            onClick={() => handleLabelChange(stop.id, option.value)}
+                            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left hover:bg-muted transition-colors ${
+                              (stop.label || "sniff").toLowerCase() === option.value
+                                ? "bg-primary/10 text-primary"
+                                : ""
+                            }`}
+                          >
+                            <span className="text-lg">{option.emoji}</span>
+                            <span className="flex-1 font-medium">{option.label}</span>
+                            {(stop.label || "sniff").toLowerCase() === option.value && (
+                              <Check className="w-4 h-4" />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 ))}
               </div>
             </>
