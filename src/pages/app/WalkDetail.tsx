@@ -64,6 +64,12 @@ interface Walk {
   duration_s: number | null;
   sniff_time_s: number | null;
   notes: string | null;
+  dog_id: string | null;
+  dogs: {
+    id: string;
+    name: string;
+    avatar_url: string | null;
+  } | null;
 }
 
 const WalkDetail = () => {
@@ -90,11 +96,15 @@ const WalkDetail = () => {
       try {
         const { data: walkData, error: walkError } = await supabase
           .from("walks")
-          .select("*")
+          .select("*, dogs(id, name, avatar_url)")
           .eq("id", walkId)
-          .single();
+          .maybeSingle();
 
         if (walkError) throw walkError;
+        if (!walkData) {
+          setIsLoading(false);
+          return;
+        }
         setWalk(walkData);
 
         // Use secure RPC function that blurs start/end coordinates for walkers
@@ -491,8 +501,23 @@ ${trackPoints.map(p => `      <trkpt lat="${p.lat}" lon="${p.lon}">
                 })}
               </p>
             </div>
-            <div className="w-14 h-14 rounded-xl bg-amber-100 flex items-center justify-center text-2xl">
-              🐕
+            <div className="flex items-center gap-3">
+              {walk.dogs ? (
+                <div className="w-14 h-14 rounded-xl bg-amber-100 flex items-center justify-center overflow-hidden">
+                  {walk.dogs.avatar_url ? (
+                    <img src={walk.dogs.avatar_url} alt={walk.dogs.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-2xl">🐕</span>
+                  )}
+                </div>
+              ) : (
+                <div className="w-14 h-14 rounded-xl bg-muted flex items-center justify-center text-2xl">
+                  🐕
+                </div>
+              )}
+              {walk.dogs && (
+                <p className="font-medium text-sm">{walk.dogs.name}</p>
+              )}
             </div>
           </div>
 
