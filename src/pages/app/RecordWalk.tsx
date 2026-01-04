@@ -87,8 +87,20 @@ const RecordWalk = () => {
     return `${(meters / 1000).toFixed(2)}km`;
   };
 
-  // Check location permission and fetch dogs
+  // Check location permission, get initial location, and fetch dogs
   useEffect(() => {
+    // Get initial location immediately
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setMapCenter([pos.coords.longitude, pos.coords.latitude]);
+          setCurrentPosition(pos);
+        },
+        () => {}, // Silently fail
+        { timeout: 5000, maximumAge: 60000, enableHighAccuracy: true }
+      );
+    }
+
     if ("permissions" in navigator) {
       navigator.permissions.query({ name: "geolocation" }).then((result) => {
         setPermissionStatus(result.state as "prompt" | "granted" | "denied");

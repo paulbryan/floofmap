@@ -54,6 +54,19 @@ const Explore = () => {
     { key: "barking", icon: <span className="text-sm">🔊</span>, label: "Barking", color: "bg-destructive/10" },
   ];
 
+  // Get user location on mount
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setMapCenter([pos.coords.longitude, pos.coords.latitude]);
+        },
+        () => {}, // Silently fail, will use default or walk data
+        { timeout: 5000, maximumAge: 60000 }
+      );
+    }
+  }, []);
+
   // Fetch walks on mount
   useEffect(() => {
     const fetchWalks = async () => {
@@ -87,16 +100,6 @@ const Explore = () => {
               counts[stop.walk_id] = (counts[stop.walk_id] || 0) + 1;
             });
             setStopCounts(counts);
-          }
-        }
-
-        // Center map on first walk's first track point if available
-        if (walksData.length > 0) {
-          const { data: firstPoints } = await supabase
-            .rpc("get_walk_track_points", { p_walk_id: walksData[0].id });
-          
-          if (firstPoints && firstPoints.length > 0) {
-            setMapCenter([firstPoints[0].lon, firstPoints[0].lat]);
           }
         }
       }
