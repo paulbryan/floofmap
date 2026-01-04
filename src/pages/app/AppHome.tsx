@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Play, MapPin, TrendingUp, Calendar, Dog, ChevronRight } from "lucide-react";
+import { Play, MapPin, TrendingUp, Calendar, Dog, ChevronRight, PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
@@ -24,6 +24,7 @@ interface Stats {
 const AppHome = () => {
   const [userName, setUserName] = useState("");
   const [recentWalks, setRecentWalks] = useState<Walk[]>([]);
+  const [hasDogs, setHasDogs] = useState(true);
   const [stats, setStats] = useState<Stats>({
     totalWalks: 0,
     totalDistance: "0 km",
@@ -41,13 +42,23 @@ const AppHome = () => {
       }
 
       if (user) {
-        // Fetch recent walks
-        const { data: walks } = await supabase
-          .from("walks")
-          .select("id, started_at, distance_m, duration_s, sniff_time_s")
-          .eq("user_id", user.id)
-          .order("started_at", { ascending: false })
-          .limit(5);
+        // Fetch recent walks and dogs in parallel
+        const [walksResult, dogsResult] = await Promise.all([
+          supabase
+            .from("walks")
+            .select("id, started_at, distance_m, duration_s, sniff_time_s")
+            .eq("user_id", user.id)
+            .order("started_at", { ascending: false })
+            .limit(5),
+          supabase
+            .from("dogs")
+            .select("id")
+            .eq("user_id", user.id)
+            .limit(1)
+        ]);
+
+        const walks = walksResult.data;
+        setHasDogs((dogsResult.data?.length ?? 0) > 0);
 
         if (walks) {
           setRecentWalks(walks);
@@ -179,7 +190,35 @@ const AppHome = () => {
       {/* Welcome Section for New Users */}
       {recentWalks.length === 0 && !loading && (
         <div className="px-4 lg:px-8 py-6">
-          <div className="max-w-6xl mx-auto">
+          <div className="max-w-6xl mx-auto space-y-4">
+            {/* Add Dog Profile Prompt */}
+            {!hasDogs && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 }}
+                className="bg-gradient-to-r from-amber-500/10 to-amber-600/5 rounded-xl border border-amber-500/20 p-4 lg:p-5"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center text-2xl shrink-0">
+                    🐕
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-sm lg:text-base">Add your furry friend</h3>
+                    <p className="text-xs lg:text-sm text-muted-foreground">
+                      Set up your dog&apos;s profile to track their walks
+                    </p>
+                  </div>
+                  <Button variant="outline" size="sm" className="shrink-0" asChild>
+                    <Link to="/app/dogs">
+                      <PlusCircle className="w-4 h-4 mr-1" />
+                      Add Dog
+                    </Link>
+                  </Button>
+                </div>
+              </motion.div>
+            )}
+
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
