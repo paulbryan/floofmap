@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import { motion } from "framer-motion";
-import { MapPin, Droplets, Trash, Search, Navigation, Loader2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { MapPin, Droplets, Trash, Search, Navigation, Loader2, MapPinned } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import MapContainer from "@/components/map/MapContainer";
@@ -10,7 +10,6 @@ import maplibregl from "maplibre-gl";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
-
 interface Walk {
   id: string;
   started_at: string;
@@ -41,7 +40,8 @@ const Explore = () => {
   const [loading, setLoading] = useState(true);
   const [loadingRoute, setLoadingRoute] = useState(false);
   const [stopCounts, setStopCounts] = useState<Record<string, number>>({});
-
+  const [showLocationUpdate, setShowLocationUpdate] = useState(false);
+  const usedCachedRef = useRef(false);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const { setMap: setRouteMap, drawRoute, clearRoute } = useMapRoute();
   const { setMap: setPOIMap, addPOIs } = usePOIMarkers();
@@ -65,6 +65,7 @@ const Explore = () => {
       
       if (profile?.cached_lat && profile?.cached_lon) {
         setMapCenter([profile.cached_lon, profile.cached_lat]);
+        usedCachedRef.current = true;
       }
       
       // Then get actual GPS location (will update map center when available)
@@ -72,6 +73,11 @@ const Explore = () => {
         navigator.geolocation.getCurrentPosition(
           (pos) => {
             setMapCenter([pos.coords.longitude, pos.coords.latitude]);
+            // Show subtle indicator if we updated from cached location
+            if (usedCachedRef.current) {
+              setShowLocationUpdate(true);
+              setTimeout(() => setShowLocationUpdate(false), 2000);
+            }
           },
           () => {},
           { timeout: 5000, maximumAge: 60000 }
@@ -274,6 +280,21 @@ const Explore = () => {
           >
             <Navigation className="w-5 h-5" />
           </Button>
+
+          {/* GPS update indicator */}
+          <AnimatePresence>
+            {showLocationUpdate && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="absolute top-4 left-1/2 -translate-x-1/2 z-20 bg-card/95 backdrop-blur rounded-full px-4 py-2 shadow-lg flex items-center gap-2 text-sm"
+              >
+                <MapPinned className="w-4 h-4 text-primary" />
+                <span>Location updated</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Legend */}
           <div className="absolute bottom-4 left-4 bg-card/95 backdrop-blur rounded-xl shadow-card p-3 z-10">
