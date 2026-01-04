@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Square, Pause, MapPin, Timer, Route, Activity, AlertTriangle, Navigation, Loader2, Dog, PlusCircle } from "lucide-react";
+import { Play, Square, Pause, MapPin, Timer, Route, Activity, AlertTriangle, Navigation, Loader2, Dog, PlusCircle, ChevronDown, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import MapContainer from "@/components/map/MapContainer";
@@ -8,6 +8,12 @@ import { useMapRoute } from "@/hooks/useMapRoute";
 import maplibregl from "maplibre-gl";
 import { supabase } from "@/integrations/supabase/client";
 import { Link, useNavigate } from "react-router-dom";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface TrackPoint {
   lat: number;
@@ -15,6 +21,13 @@ interface TrackPoint {
   timestamp: number;
   accuracy: number;
   speed: number | null;
+}
+
+interface DogOption {
+  id: string;
+  name: string;
+  avatar_url: string | null;
+  isShared: boolean;
 }
 
 const RecordWalk = () => {
@@ -29,7 +42,9 @@ const RecordWalk = () => {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [distance, setDistance] = useState(0);
   const [mapCenter, setMapCenter] = useState<[number, number]>([-0.09, 51.505]);
-  const [hasDogs, setHasDogs] = useState<boolean | null>(null);
+  const [dogs, setDogs] = useState<DogOption[]>([]);
+  const [selectedDog, setSelectedDog] = useState<DogOption | null>(null);
+  const [loadingDogs, setLoadingDogs] = useState(true);
 
   const watchIdRef = useRef<number | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -72,7 +87,7 @@ const RecordWalk = () => {
     return `${(meters / 1000).toFixed(2)}km`;
   };
 
-  // Check location permission and dogs
+  // Check location permission and fetch dogs
   useEffect(() => {
     if ("permissions" in navigator) {
       navigator.permissions.query({ name: "geolocation" }).then((result) => {
@@ -83,19 +98,66 @@ const RecordWalk = () => {
       });
     }
 
-    // Check if user has dogs
-    const checkDogs = async () => {
+    // Fetch owned and shared dogs
+    const fetchDogs = async () => {
+      setLoadingDogs(true);
       const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data } = await supabase
-          .from("dogs")
-          .select("id")
-          .eq("user_id", user.id)
-          .limit(1);
-        setHasDogs((data?.length ?? 0) > 0);
+      if (!user) {
+        setLoadingDogs(false);
+        return;
       }
+
+      // Fetch owned dogs
+      const { data: ownedDogs } = await supabase
+        .from("dogs")
+        .select("id, name, avatar_url")
+        .eq("user_id", user.id);
+
+      // Fetch shared dogs (via dog_walkers)
+      const { data: sharedAccess } = await supabase
+        .from("dog_walkers")
+        .select("dog_id, dogs(id, name, avatar_url)")
+        .eq("walker_user_id", user.id)
+        .eq("status", "active");
+
+      const allDogs: DogOption[] = [];
+
+      // Add owned dogs
+      if (ownedDogs) {
+        ownedDogs.forEach(dog => {
+          allDogs.push({
+            id: dog.id,
+            name: dog.name,
+            avatar_url: dog.avatar_url,
+            isShared: false,
+          });
+        });
+      }
+
+      // Add shared dogs
+      if (sharedAccess) {
+        sharedAccess.forEach(access => {
+          const dog = access.dogs as unknown as { id: string; name: string; avatar_url: string | null } | null;
+          if (dog && !allDogs.find(d => d.id === dog.id)) {
+            allDogs.push({
+              id: dog.id,
+              name: dog.name,
+              avatar_url: dog.avatar_url,
+              isShared: true,
+            });
+          }
+        });
+      }
+
+      setDogs(allDogs);
+      // Auto-select first dog if only one
+      if (allDogs.length === 1) {
+        setSelectedDog(allDogs[0]);
+      }
+      setLoadingDogs(false);
     };
-    checkDogs();
+
+    fetchDogs();
   }, []);
 
   // Handle position updates
@@ -305,6 +367,7 @@ const RecordWalk = () => {
         .from("walks")
         .insert({
           user_id: user.id,
+          dog_id: selectedDog?.id || null,
           started_at: new Date(trackPoints[0].timestamp).toISOString(),
           ended_at: new Date(trackPoints[trackPoints.length - 1].timestamp).toISOString(),
           distance_m: Math.round(distance),
@@ -487,7 +550,12 @@ const RecordWalk = () => {
             {/* Control buttons */}
             <div className="flex flex-col items-center gap-4">
               {!isRecording ? (
-                hasDogs === false ? (
+                loadingDogs ? (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>Loading dogs...</span>
+                  </div>
+                ) : dogs.length === 0 ? (
                   <div className="w-full max-w-xs text-center">
                     <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 mb-4">
                       <Dog className="w-10 h-10 text-amber-500 mx-auto mb-2" />
@@ -504,16 +572,68 @@ const RecordWalk = () => {
                     </Button>
                   </div>
                 ) : (
-                  <Button
-                    onClick={handleStart}
-                    variant="hero"
-                    size="xl"
-                    className="w-full max-w-xs"
-                    disabled={hasDogs === null}
-                  >
-                    <Play className="w-6 h-6" />
-                    Start Walk
-                  </Button>
+                  <div className="w-full max-w-xs space-y-3">
+                    {/* Dog selector */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" className="w-full justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-amber-500/20 flex items-center justify-center text-sm">
+                              {selectedDog?.avatar_url ? (
+                                <img src={selectedDog.avatar_url} alt="" className="w-6 h-6 rounded-full object-cover" />
+                              ) : (
+                                "🐕"
+                              )}
+                            </div>
+                            <span>
+                              {selectedDog ? selectedDog.name : "Select a dog"}
+                              {selectedDog?.isShared && (
+                                <span className="text-xs text-muted-foreground ml-1">(shared)</span>
+                              )}
+                            </span>
+                          </div>
+                          <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="center" className="w-56">
+                        {dogs.map((dog) => (
+                          <DropdownMenuItem
+                            key={dog.id}
+                            onClick={() => setSelectedDog(dog)}
+                            className="flex items-center justify-between"
+                          >
+                            <div className="flex items-center gap-2">
+                              <div className="w-6 h-6 rounded-full bg-amber-500/20 flex items-center justify-center text-sm">
+                                {dog.avatar_url ? (
+                                  <img src={dog.avatar_url} alt="" className="w-6 h-6 rounded-full object-cover" />
+                                ) : (
+                                  "🐕"
+                                )}
+                              </div>
+                              <span>{dog.name}</span>
+                              {dog.isShared && (
+                                <span className="text-xs text-muted-foreground">(shared)</span>
+                              )}
+                            </div>
+                            {selectedDog?.id === dog.id && (
+                              <Check className="w-4 h-4 text-primary" />
+                            )}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    <Button
+                      onClick={handleStart}
+                      variant="hero"
+                      size="xl"
+                      className="w-full"
+                      disabled={!selectedDog}
+                    >
+                      <Play className="w-6 h-6" />
+                      Start Walk
+                    </Button>
+                  </div>
                 )
               ) : (
                 <>
