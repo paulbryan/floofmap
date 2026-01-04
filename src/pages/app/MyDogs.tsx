@@ -129,15 +129,18 @@ const MyDogs = () => {
         setSharedDogs(shared);
       }
 
-      // Load pending invites for me
+      // Load pending invites for me using secure RPC (matches by email server-side)
       const { data: invites, error: invitesError } = await supabase
-        .from("dog_walkers")
-        .select("id, dog_id, owner_user_id, status, dogs(name)")
-        .eq("walker_user_id", user.id)
-        .eq("status", "pending");
+        .rpc("get_my_pending_invites");
 
       if (!invitesError && invites) {
-        setPendingInvites(invites as unknown as WalkerInvite[]);
+        setPendingInvites(invites.map((inv: any) => ({
+          id: inv.id,
+          dog_id: inv.dog_id,
+          owner_user_id: inv.owner_user_id,
+          status: inv.status,
+          dog_name: inv.dog_name,
+        })));
       }
     } catch (error: any) {
       toast({
