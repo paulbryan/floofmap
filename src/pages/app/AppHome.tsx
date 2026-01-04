@@ -176,35 +176,84 @@ const AppHome = () => {
         </div>
       )}
 
-      {/* Recent Walks */}
-      <div className="px-4 lg:px-8 pb-8">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-primary" />
-              Recent Walks
-            </h2>
-            <Link
-              to="/app/explore"
-              className="text-sm text-primary font-medium flex items-center gap-1"
+      {/* Welcome Section for New Users */}
+      {recentWalks.length === 0 && !loading && (
+        <div className="px-4 lg:px-8 py-6">
+          <div className="max-w-6xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-gradient-to-br from-primary/5 via-amber-500/5 to-secondary/5 rounded-2xl border border-border p-6 lg:p-8"
             >
-              View all
-              <ChevronRight className="w-4 h-4" />
-            </Link>
-          </div>
+              <div className="text-center max-w-lg mx-auto">
+                <div className="text-5xl mb-4">🐾</div>
+                <h2 className="text-xl lg:text-2xl font-bold mb-2">Welcome to Floof Map!</h2>
+                <p className="text-muted-foreground mb-6">
+                  Track your dog walks, discover sniff-worthy spots, and explore dog-friendly places in your neighborhood.
+                </p>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                  <div className="bg-card/50 rounded-xl p-4 border border-border/50">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
+                      <Play className="w-5 h-5 text-primary" />
+                    </div>
+                    <p className="text-sm font-medium">Record Walks</p>
+                    <p className="text-xs text-muted-foreground">Track routes & sniff stops</p>
+                  </div>
+                  <div className="bg-card/50 rounded-xl p-4 border border-border/50">
+                    <div className="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center mx-auto mb-2">
+                      <MapPin className="w-5 h-5 text-secondary" />
+                    </div>
+                    <p className="text-sm font-medium">Discover POIs</p>
+                    <p className="text-xs text-muted-foreground">Parks, water & more</p>
+                  </div>
+                  <div className="bg-card/50 rounded-xl p-4 border border-border/50">
+                    <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center mx-auto mb-2">
+                      <TrendingUp className="w-5 h-5 text-amber-500" />
+                    </div>
+                    <p className="text-sm font-medium">Track Stats</p>
+                    <p className="text-xs text-muted-foreground">Distance & sniff time</p>
+                  </div>
+                </div>
 
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4"
-          >
-            {recentWalks.length === 0 ? (
-              <div className="col-span-full text-center py-8 text-muted-foreground">
-                <p>No walks yet. Start your first walk!</p>
+                <Button variant="hero" size="lg" asChild>
+                  <Link to="/app/record">
+                    <Play className="w-5 h-5" />
+                    Start Your First Walk
+                  </Link>
+                </Button>
               </div>
-            ) : (
-              recentWalks.map((walk, index) => (
+            </motion.div>
+          </div>
+        </div>
+      )}
+
+      {/* Recent Walks - only show if there are walks */}
+      {recentWalks.length > 0 && (
+        <div className="px-4 lg:px-8 pb-8">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-semibold flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-primary" />
+                Recent Walks
+              </h2>
+              <Link
+                to="/app/explore"
+                className="text-sm text-primary font-medium flex items-center gap-1"
+              >
+                View all
+                <ChevronRight className="w-4 h-4" />
+              </Link>
+            </div>
+
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4"
+            >
+              {recentWalks.map((walk, index) => (
                 <motion.div
                   key={walk.id}
                   initial={{ opacity: 0, x: -20 }}
@@ -228,11 +277,11 @@ const AppHome = () => {
                   </div>
                   <ChevronRight className="w-5 h-5 text-muted-foreground" />
                 </motion.div>
-              ))
-            )}
-          </motion.div>
+              ))}
+            </motion.div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
