@@ -141,38 +141,40 @@ const AppHome = () => {
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="px-4 lg:px-8 py-6">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="font-semibold mb-4 flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-primary" />
-            Your Stats
-          </h2>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="grid grid-cols-2 lg:grid-cols-4 gap-4"
-          >
-            <div className="bg-card rounded-xl p-4 lg:p-6 border border-border">
-              <p className="text-2xl lg:text-3xl font-bold text-primary">{stats.totalWalks}</p>
-              <p className="text-sm text-muted-foreground">Total Walks</p>
-            </div>
-            <div className="bg-card rounded-xl p-4 lg:p-6 border border-border">
-              <p className="text-2xl lg:text-3xl font-bold text-secondary">{stats.totalDistance}</p>
-              <p className="text-sm text-muted-foreground">Distance</p>
-            </div>
-            <div className="bg-card rounded-xl p-4 lg:p-6 border border-border">
-              <p className="text-2xl lg:text-3xl font-bold text-accent">{stats.avgSniffs}</p>
-              <p className="text-sm text-muted-foreground">Avg Sniffs/Walk</p>
-            </div>
-            <div className="bg-card rounded-xl p-4 lg:p-6 border border-border">
-              <p className="text-2xl lg:text-3xl font-bold text-amber-500">{stats.streak} 🔥</p>
-              <p className="text-sm text-muted-foreground">Day Streak</p>
-            </div>
-          </motion.div>
+      {/* Stats Grid - only show if there are walks */}
+      {recentWalks.length > 0 && (
+        <div className="px-4 lg:px-8 py-6">
+          <div className="max-w-6xl mx-auto">
+            <h2 className="font-semibold mb-4 flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-primary" />
+              Your Stats
+            </h2>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+            >
+              <div className="bg-card rounded-xl p-4 lg:p-6 border border-border">
+                <p className="text-2xl lg:text-3xl font-bold text-primary">{stats.totalWalks}</p>
+                <p className="text-sm text-muted-foreground">Total Walks</p>
+              </div>
+              <div className="bg-card rounded-xl p-4 lg:p-6 border border-border">
+                <p className="text-2xl lg:text-3xl font-bold text-secondary">{stats.totalDistance}</p>
+                <p className="text-sm text-muted-foreground">Distance</p>
+              </div>
+              <div className="bg-card rounded-xl p-4 lg:p-6 border border-border">
+                <p className="text-2xl lg:text-3xl font-bold text-accent">{stats.avgSniffs}</p>
+                <p className="text-sm text-muted-foreground">Avg Sniffs/Walk</p>
+              </div>
+              <div className="bg-card rounded-xl p-4 lg:p-6 border border-border">
+                <p className="text-2xl lg:text-3xl font-bold text-amber-500">{stats.streak} 🔥</p>
+                <p className="text-sm text-muted-foreground">Day Streak</p>
+              </div>
+            </motion.div>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Recent Walks */}
       <div className="px-4 lg:px-8 pb-8">
