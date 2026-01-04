@@ -1,35 +1,91 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Play, MapPin, TrendingUp, Calendar, Dog, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { formatDistanceToNow } from "date-fns";
+
+interface Walk {
+  id: string;
+  started_at: string;
+  distance_m: number | null;
+  duration_s: number | null;
+  sniff_time_s: number | null;
+}
+
+interface Stats {
+  totalWalks: number;
+  totalDistance: string;
+  avgSniffs: number;
+  streak: number;
+}
 
 const AppHome = () => {
   const [userName, setUserName] = useState("");
+  const [recentWalks, setRecentWalks] = useState<Walk[]>([]);
+  const [stats, setStats] = useState<Stats>({
+    totalWalks: 0,
+    totalDistance: "0 km",
+    avgSniffs: 0,
+    streak: 0,
+  });
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const getUser = async () => {
+    const fetchData = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user?.email) {
         setUserName(user.email.split("@")[0]);
       }
+
+      if (user) {
+        // Fetch recent walks
+        const { data: walks } = await supabase
+          .from("walks")
+          .select("id, started_at, distance_m, duration_s, sniff_time_s")
+          .eq("user_id", user.id)
+          .order("started_at", { ascending: false })
+          .limit(5);
+
+        if (walks) {
+          setRecentWalks(walks);
+
+          // Calculate stats
+          const totalDistance = walks.reduce((sum, w) => sum + (w.distance_m || 0), 0);
+          const totalSniffTime = walks.reduce((sum, w) => sum + (w.sniff_time_s || 0), 0);
+          const avgSniffs = walks.length > 0 ? Math.round(totalSniffTime / walks.length / 60) : 0;
+
+          setStats({
+            totalWalks: walks.length,
+            totalDistance: totalDistance >= 1000 
+              ? `${(totalDistance / 1000).toFixed(1)} km` 
+              : `${Math.round(totalDistance)} m`,
+            avgSniffs: avgSniffs,
+            streak: 0, // TODO: Calculate streak
+          });
+        }
+      }
+      setLoading(false);
     };
-    getUser();
+
+    fetchData();
   }, []);
 
-  // Mock data for demo
-  const recentWalks = [
-    { id: 1, date: "Today", distance: "2.4 km", duration: "32 min", sniffs: 12 },
-    { id: 2, date: "Yesterday", distance: "1.8 km", duration: "25 min", sniffs: 8 },
-    { id: 3, date: "2 days ago", distance: "3.1 km", duration: "45 min", sniffs: 15 },
-  ];
+  const formatWalkDate = (dateStr: string) => {
+    return formatDistanceToNow(new Date(dateStr), { addSuffix: true });
+  };
 
-  const stats = {
-    totalWalks: 47,
-    totalDistance: "89.5 km",
-    avgSniffs: 11,
-    streak: 5,
+  const formatDistance = (meters: number | null) => {
+    if (!meters) return "0 m";
+    return meters >= 1000 ? `${(meters / 1000).toFixed(1)} km` : `${Math.round(meters)} m`;
+  };
+
+  const formatDuration = (seconds: number | null) => {
+    if (!seconds) return "0 min";
+    const mins = Math.round(seconds / 60);
+    return `${mins} min`;
   };
 
   return (
@@ -141,31 +197,37 @@ const AppHome = () => {
             transition={{ delay: 0.3 }}
             className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4"
           >
-            {recentWalks.map((walk, index) => (
-              <motion.div
-                key={walk.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 + index * 0.1 }}
-                className="bg-card rounded-xl p-4 border border-border flex items-center gap-4 hover:shadow-card transition-shadow cursor-pointer"
-                onClick={() => {/* In production, navigate to /app/walk/{walkId} */}}
-              >
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <MapPin className="w-6 h-6 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium">{walk.date}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {walk.distance} • {walk.duration}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="font-semibold text-primary">{walk.sniffs}</p>
-                  <p className="text-xs text-muted-foreground">sniffs</p>
-                </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
-              </motion.div>
-            ))}
+            {recentWalks.length === 0 ? (
+              <div className="col-span-full text-center py-8 text-muted-foreground">
+                <p>No walks yet. Start your first walk!</p>
+              </div>
+            ) : (
+              recentWalks.map((walk, index) => (
+                <motion.div
+                  key={walk.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 + index * 0.1 }}
+                  className="bg-card rounded-xl p-4 border border-border flex items-center gap-4 hover:shadow-card transition-shadow cursor-pointer"
+                  onClick={() => navigate(`/app/walk/${walk.id}`)}
+                >
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <MapPin className="w-6 h-6 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium">{formatWalkDate(walk.started_at)}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {formatDistance(walk.distance_m)} • {formatDuration(walk.duration_s)}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold text-primary">{Math.round((walk.sniff_time_s || 0) / 60)}</p>
+                    <p className="text-xs text-muted-foreground">sniff min</p>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                </motion.div>
+              ))
+            )}
           </motion.div>
         </div>
       </div>
