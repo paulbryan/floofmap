@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Square, Pause, MapPin, Timer, Route, Activity, AlertTriangle, Navigation } from "lucide-react";
+import { Play, Square, Pause, MapPin, Timer, Route, Activity, AlertTriangle, Navigation, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import MapContainer from "@/components/map/MapContainer";
 import { useMapRoute } from "@/hooks/useMapRoute";
 import maplibregl from "maplibre-gl";
-
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 interface TrackPoint {
   lat: number;
   lon: number;
@@ -17,8 +18,10 @@ interface TrackPoint {
 
 const RecordWalk = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [permissionStatus, setPermissionStatus] = useState<"prompt" | "granted" | "denied">("prompt");
   const [currentPosition, setCurrentPosition] = useState<GeolocationPosition | null>(null);
   const [trackPoints, setTrackPoints] = useState<TrackPoint[]>([]);
@@ -245,8 +248,8 @@ const RecordWalk = () => {
     }, 1000);
   };
 
-  // Stop recording
-  const handleStop = () => {
+  // Stop recording and save walk
+  const handleStop = async () => {
     setIsRecording(false);
     setIsPaused(false);
     stopTracking();
@@ -256,10 +259,90 @@ const RecordWalk = () => {
       timerRef.current = null;
     }
 
-    toast({
-      title: "Walk Saved! 🎉",
-      description: `You walked ${formatDistance(distance)} in ${formatTime(elapsedTime)}.`,
-    });
+    // Need at least 2 points to save
+    if (trackPoints.length < 2) {
+      toast({
+        title: "Walk too short",
+        description: "Record a bit longer to save your walk.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Not signed in",
+          description: "Please sign in to save your walks.",
+          variant: "destructive",
+        });
+        setIsSaving(false);
+        return;
+      }
+
+      // Create walk record
+      const { data: walk, error: walkError } = await supabase
+        .from("walks")
+        .insert({
+          user_id: user.id,
+          started_at: new Date(trackPoints[0].timestamp).toISOString(),
+          ended_at: new Date(trackPoints[trackPoints.length - 1].timestamp).toISOString(),
+          distance_m: Math.round(distance),
+          duration_s: elapsedTime,
+        })
+        .select()
+        .single();
+
+      if (walkError) throw walkError;
+
+      // Insert track points
+      const pointsToInsert = trackPoints.map(p => ({
+        walk_id: walk.id,
+        ts: new Date(p.timestamp).toISOString(),
+        lat: p.lat,
+        lon: p.lon,
+        accuracy_m: p.accuracy,
+        speed_mps: p.speed,
+      }));
+
+      const { error: pointsError } = await supabase
+        .from("track_points")
+        .insert(pointsToInsert);
+
+      if (pointsError) throw pointsError;
+
+      // Trigger sniff detection in background
+      supabase.functions.invoke("detect-stops", {
+        body: { walk_id: walk.id },
+      }).then(({ data, error }) => {
+        if (error) {
+          console.error("Stop detection error:", error);
+        } else {
+          console.log("Stop detection complete:", data);
+        }
+      });
+
+      toast({
+        title: "Walk Saved! 🎉",
+        description: `You walked ${formatDistance(distance)} in ${formatTime(elapsedTime)}. Analyzing sniff stops...`,
+      });
+
+      // Navigate to walk detail
+      navigate(`/app/walk/${walk.id}`);
+    } catch (error) {
+      console.error("Error saving walk:", error);
+      toast({
+        title: "Failed to save",
+        description: "There was an error saving your walk. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Cleanup on unmount
@@ -420,9 +503,19 @@ const RecordWalk = () => {
                   variant="destructive"
                   size="lg"
                   className="flex-1"
+                  disabled={isSaving}
                 >
-                  <Square className="w-5 h-5" />
-                  Stop
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Square className="w-5 h-5" />
+                      Stop
+                    </>
+                  )}
                 </Button>
               </>
             )}
