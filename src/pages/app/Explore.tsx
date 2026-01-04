@@ -36,7 +36,7 @@ const Explore = () => {
   const [activeFilter, setActiveFilter] = useState<POIFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedWalk, setSelectedWalk] = useState<string | null>(null);
-  const [mapCenter, setMapCenter] = useState<[number, number]>([-0.09, 51.505]);
+  const [mapCenter, setMapCenter] = useState<[number, number] | null>(null);
   const [walks, setWalks] = useState<Walk[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingRoute, setLoadingRoute] = useState(false);
@@ -245,12 +245,18 @@ const Explore = () => {
       <div className="max-w-7xl mx-auto md:flex md:gap-6 md:p-6">
         {/* Map area */}
         <div className="h-[40vh] md:h-[calc(100vh-200px)] md:flex-1 md:rounded-xl md:overflow-hidden md:shadow-card relative">
-          <MapContainer
-            className="h-full w-full"
-            center={mapCenter}
-            zoom={14}
-            onMapLoad={handleMapLoad}
-          />
+          {mapCenter ? (
+            <MapContainer
+              className="h-full w-full"
+              center={mapCenter}
+              zoom={14}
+              onMapLoad={handleMapLoad}
+            />
+          ) : (
+            <div className="h-full w-full bg-muted flex items-center justify-center">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          )}
 
           {/* Loading overlay */}
           {loadingRoute && (
