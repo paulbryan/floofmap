@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Play, MapPin, TrendingUp, Calendar, ChevronRight, PlusCircle, Flame, Cloud, Sun, CloudRain, CloudSnow, CloudLightning, CloudFog } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { formatDistanceToNow, startOfDay, subDays, isEqual, isBefore } from "date-fns";
+import { formatDistanceToNow, startOfDay, subDays, isEqual, isBefore, format } from "date-fns";
 
 // Time-based greeting
 const getGreeting = (): { text: string; emoji: string } => {
@@ -31,10 +31,17 @@ const getWeatherIcon = (main: string) => {
   }
 };
 
+interface ForecastItem {
+  time: string;
+  temp: number;
+  main: string;
+}
+
 interface WeatherData {
   temp: number;
   description: string;
   main: string;
+  forecast?: ForecastItem[];
 }
 
 interface WalkBase {
@@ -264,6 +271,29 @@ const AppHome = () => {
               🐕
             </div>
           </motion.div>
+
+          {/* Weather Forecast */}
+          {weather?.forecast && weather.forecast.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 }}
+              className="flex gap-2 overflow-x-auto pb-2 mb-4 scrollbar-hide"
+            >
+              {weather.forecast.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="flex-shrink-0 bg-card/60 backdrop-blur-sm rounded-lg px-3 py-2 border border-border/50 flex items-center gap-2"
+                >
+                  <span className="text-muted-foreground text-xs">
+                    {format(new Date(item.time), 'ha')}
+                  </span>
+                  {getWeatherIcon(item.main)}
+                  <span className="text-sm font-medium">{item.temp}°</span>
+                </div>
+              ))}
+            </motion.div>
+          )}
 
           {/* Start Walk Button */}
           <motion.div
