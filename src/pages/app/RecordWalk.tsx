@@ -41,7 +41,7 @@ const RecordWalk = () => {
   const [trackPoints, setTrackPoints] = useState<TrackPoint[]>([]);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [distance, setDistance] = useState(0);
-  const [mapCenter, setMapCenter] = useState<[number, number]>([-0.09, 51.505]);
+  const [mapCenter, setMapCenter] = useState<[number, number] | null>(null);
   const [dogs, setDogs] = useState<DogOption[]>([]);
   const [selectedDog, setSelectedDog] = useState<DogOption | null>(null);
   const [loadingDogs, setLoadingDogs] = useState(true);
@@ -470,12 +470,18 @@ const RecordWalk = () => {
       <div className="md:flex md:h-screen">
         {/* Map */}
         <div className="h-[50vh] md:h-full md:flex-1 relative overflow-hidden">
-          <MapContainer
-            className="h-full w-full"
-            center={mapCenter}
-            zoom={16}
-            onMapLoad={handleMapLoad}
-          />
+          {mapCenter ? (
+            <MapContainer
+              className="h-full w-full"
+              center={mapCenter}
+              zoom={16}
+              onMapLoad={handleMapLoad}
+            />
+          ) : (
+            <div className="h-full w-full bg-muted flex items-center justify-center">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          )}
 
           {/* Center on location button */}
           {currentPosition && (
