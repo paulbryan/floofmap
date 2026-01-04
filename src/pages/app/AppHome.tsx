@@ -175,7 +175,7 @@ const AppHome = () => {
           .from("profiles")
           .select("full_name, cached_lat, cached_lon")
           .eq("id", user.id)
-          .single(),
+          .single<{ full_name: string | null; cached_lat: number | null; cached_lon: number | null }>(),
         supabase
           .from("walks")
           .select("id, started_at, distance_m, duration_s, sniff_time_s, dogs(id, name, avatar_url)")
