@@ -321,7 +321,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_dog_walker_invite: {
+        Args: { p_invite_id: string }
+        Returns: boolean
+      }
       blur_coordinate: { Args: { coord: number }; Returns: number }
+      decline_dog_walker_invite: {
+        Args: { p_invite_id: string }
+        Returns: boolean
+      }
       get_dog_walkers_for_owner: {
         Args: { p_owner_user_id: string }
         Returns: {
