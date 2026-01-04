@@ -74,12 +74,18 @@ serve(async (req) => {
     }
 
     const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`;
+    const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&cnt=4&appid=${apiKey}`;
+    
     console.log(`Fetching weather for lat=${lat}, lon=${lon}`);
 
-    const weatherResponse = await fetch(weatherUrl);
+    const [weatherResponse, forecastResponse] = await Promise.all([
+      fetch(weatherUrl),
+      fetch(forecastUrl)
+    ]);
+
     if (!weatherResponse.ok) {
       const errorText = await weatherResponse.text();
-      console.error('OpenWeatherMap error:', errorText);
+      console.error('OpenWeatherMap weather error:', errorText);
       return new Response(JSON.stringify({ error: 'Failed to fetch weather' }), {
         status: 502,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -89,12 +95,25 @@ serve(async (req) => {
     const weatherData = await weatherResponse.json();
     console.log('Weather data received:', JSON.stringify(weatherData));
 
+    // Parse forecast data
+    let forecast: Array<{ time: string; temp: number; main: string; icon: string }> = [];
+    if (forecastResponse.ok) {
+      const forecastData = await forecastResponse.json();
+      forecast = (forecastData.list || []).map((item: any) => ({
+        time: item.dt_txt,
+        temp: Math.round(item.main?.temp ?? 0),
+        main: item.weather?.[0]?.main ?? 'Clear',
+        icon: item.weather?.[0]?.icon ?? '01d',
+      }));
+    }
+
     // Extract relevant weather info
     const result = {
       temp: Math.round(weatherData.main?.temp ?? 0),
       description: weatherData.weather?.[0]?.description ?? 'unknown',
       icon: weatherData.weather?.[0]?.icon ?? '01d',
       main: weatherData.weather?.[0]?.main ?? 'Clear',
+      forecast,
     };
 
     return new Response(JSON.stringify(result), {
