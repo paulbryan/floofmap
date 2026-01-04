@@ -1,76 +1,50 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import { MapPin, Droplets, Trash, Search, Navigation } from "lucide-react";
+import { MapPin, Droplets, Trash, Search, Navigation, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import MapContainer from "@/components/map/MapContainer";
 import { useMapRoute } from "@/hooks/useMapRoute";
 import { usePOIMarkers, POI } from "@/hooks/usePOIMarkers";
 import maplibregl from "maplibre-gl";
+import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
+import { useNavigate } from "react-router-dom";
 
-// Mock data for walks
-const mockWalks = [
-  {
-    id: "1",
-    date: "Jan 3, 2026",
-    distance: 2.4,
-    duration: 32,
-    sniffs: 12,
-    route: [
-      { lat: 51.505, lon: -0.09 },
-      { lat: 51.507, lon: -0.092 },
-      { lat: 51.51, lon: -0.1 },
-      { lat: 51.512, lon: -0.098 },
-      { lat: 51.51, lon: -0.12 },
-    ],
-  },
-  {
-    id: "2",
-    date: "Jan 2, 2026",
-    distance: 1.8,
-    duration: 25,
-    sniffs: 8,
-    route: [
-      { lat: 51.503, lon: -0.085 },
-      { lat: 51.506, lon: -0.09 },
-      { lat: 51.508, lon: -0.095 },
-    ],
-  },
-  {
-    id: "3",
-    date: "Jan 1, 2026",
-    distance: 3.1,
-    duration: 45,
-    sniffs: 15,
-    route: [
-      { lat: 51.505, lon: -0.09 },
-      { lat: 51.51, lon: -0.085 },
-      { lat: 51.515, lon: -0.08 },
-      { lat: 51.518, lon: -0.09 },
-      { lat: 51.52, lon: -0.1 },
-    ],
-  },
-];
+interface Walk {
+  id: string;
+  started_at: string;
+  distance_m: number | null;
+  duration_s: number | null;
+  sniff_time_s: number | null;
+  dogs: {
+    id: string;
+    name: string;
+    avatar_url: string | null;
+  } | null;
+}
 
-// Mock POI data
-const mockPOIs: POI[] = [
-  { id: "water-1", type: "water", name: "Dog Water Fountain", lat: 51.508, lon: -0.095 },
-  { id: "bin-1", type: "bin", name: "Waste Bin", lat: 51.51, lon: -0.1 },
-  { id: "dog_park-1", type: "dog_park", name: "Hyde Park Dog Area", lat: 51.512, lon: -0.098 },
-  { id: "sniff-1", type: "sniff", name: "Popular Sniff Spot", lat: 51.507, lon: -0.092 },
-];
+interface TrackPoint {
+  lat: number;
+  lon: number;
+}
 
 type POIFilter = "all" | "water" | "bin" | "dog_park" | "barking";
 
 const Explore = () => {
+  const navigate = useNavigate();
   const [activeFilter, setActiveFilter] = useState<POIFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedWalk, setSelectedWalk] = useState<string | null>(null);
   const [mapCenter, setMapCenter] = useState<[number, number]>([-0.09, 51.505]);
+  const [walks, setWalks] = useState<Walk[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingRoute, setLoadingRoute] = useState(false);
+  const [stopCounts, setStopCounts] = useState<Record<string, number>>({});
 
   const mapRef = useRef<maplibregl.Map | null>(null);
   const { setMap: setRouteMap, drawRoute, clearRoute } = useMapRoute();
-  const { setMap: setPOIMap, addPOIs, clearPOIs } = usePOIMarkers();
+  const { setMap: setPOIMap, addPOIs } = usePOIMarkers();
 
   const filters: { key: POIFilter; icon: React.ReactNode; label: string; color: string }[] = [
     { key: "all", icon: <MapPin className="w-4 h-4" />, label: "All", color: "bg-muted" },
@@ -80,28 +54,109 @@ const Explore = () => {
     { key: "barking", icon: <span className="text-sm">🔊</span>, label: "Barking", color: "bg-destructive/10" },
   ];
 
+  // Fetch walks on mount
+  useEffect(() => {
+    const fetchWalks = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      const { data: walksData } = await supabase
+        .from("walks")
+        .select("id, started_at, distance_m, duration_s, sniff_time_s, dogs(id, name, avatar_url)")
+        .eq("user_id", user.id)
+        .order("started_at", { ascending: false })
+        .limit(50);
+
+      if (walksData) {
+        setWalks(walksData);
+
+        // Fetch stop counts for each walk
+        const walkIds = walksData.map(w => w.id);
+        if (walkIds.length > 0) {
+          const { data: stopsData } = await supabase
+            .from("stop_events")
+            .select("walk_id")
+            .in("walk_id", walkIds);
+
+          if (stopsData) {
+            const counts: Record<string, number> = {};
+            stopsData.forEach(stop => {
+              counts[stop.walk_id] = (counts[stop.walk_id] || 0) + 1;
+            });
+            setStopCounts(counts);
+          }
+        }
+
+        // Center map on first walk's first track point if available
+        if (walksData.length > 0) {
+          const { data: firstPoints } = await supabase
+            .rpc("get_walk_track_points", { p_walk_id: walksData[0].id });
+          
+          if (firstPoints && firstPoints.length > 0) {
+            setMapCenter([firstPoints[0].lon, firstPoints[0].lat]);
+          }
+        }
+      }
+
+      setLoading(false);
+    };
+
+    fetchWalks();
+  }, []);
+
   const handleMapLoad = useCallback((map: maplibregl.Map) => {
     mapRef.current = map;
     setRouteMap(map);
     setPOIMap(map);
-    
-    // Add POIs after map loads
-    setTimeout(() => {
-      addPOIs(mockPOIs);
-    }, 100);
-  }, [setRouteMap, setPOIMap, addPOIs]);
+  }, [setRouteMap, setPOIMap]);
 
-  const handleWalkSelect = (walkId: string) => {
+  const handleWalkSelect = async (walkId: string) => {
     if (selectedWalk === walkId) {
       setSelectedWalk(null);
       clearRoute();
-    } else {
-      setSelectedWalk(walkId);
-      const walk = mockWalks.find(w => w.id === walkId);
-      if (walk && mapRef.current) {
-        drawRoute(walk.route, true);
+      return;
+    }
+
+    setSelectedWalk(walkId);
+    setLoadingRoute(true);
+
+    // Fetch track points for the selected walk
+    const { data: points } = await supabase
+      .rpc("get_walk_track_points", { p_walk_id: walkId });
+
+    if (points && points.length > 0 && mapRef.current) {
+      const route: TrackPoint[] = points.map((p: { lat: number; lon: number }) => ({
+        lat: p.lat,
+        lon: p.lon,
+      }));
+      drawRoute(route, true);
+
+      // Also fetch and show stop events as POIs
+      const { data: stops } = await supabase
+        .from("stop_events")
+        .select("id, lat, lon, label")
+        .eq("walk_id", walkId);
+
+      if (stops && stops.length > 0) {
+        const pois: POI[] = stops.map(stop => ({
+          id: stop.id,
+          type: (stop.label || "sniff") as POI["type"],
+          name: stop.label || "Sniff Stop",
+          lat: stop.lat,
+          lon: stop.lon,
+        }));
+        addPOIs(pois);
       }
     }
+
+    setLoadingRoute(false);
+  };
+
+  const handleWalkDoubleClick = (walkId: string) => {
+    navigate(`/app/walk/${walkId}`);
   };
 
   const handleCenterOnLocation = () => {
@@ -115,6 +170,16 @@ const Explore = () => {
         () => {}
       );
     }
+  };
+
+  const formatDistance = (meters: number | null) => {
+    if (!meters) return "0 m";
+    return meters >= 1000 ? `${(meters / 1000).toFixed(1)} km` : `${Math.round(meters)} m`;
+  };
+
+  const formatDuration = (seconds: number | null) => {
+    if (!seconds) return "0 min";
+    return `${Math.round(seconds / 60)} min`;
   };
 
   return (
@@ -170,6 +235,13 @@ const Explore = () => {
             onMapLoad={handleMapLoad}
           />
 
+          {/* Loading overlay */}
+          {loadingRoute && (
+            <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-20">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          )}
+
           {/* Center on location button */}
           <Button
             onClick={handleCenterOnLocation}
@@ -207,27 +279,63 @@ const Explore = () => {
           </h2>
 
           <div className="space-y-3 md:max-h-[calc(100vh-280px)] md:overflow-y-auto md:pr-2">
-            {mockWalks.map((walk) => (
-              <motion.button
-                key={walk.id}
-                onClick={() => handleWalkSelect(walk.id)}
-                className={`w-full p-4 rounded-xl border transition-all text-left ${
-                  selectedWalk === walk.id
-                    ? "bg-primary/5 border-primary shadow-md"
-                    : "bg-card border-border hover:shadow-card"
-                }`}
-                whileTap={{ scale: 0.98 }}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-medium">{walk.date}</span>
-                  <span className="text-primary font-semibold">{walk.sniffs} sniffs</span>
-                </div>
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <span>{walk.distance} km</span>
-                  <span>{walk.duration} min</span>
-                </div>
-              </motion.button>
-            ))}
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              </div>
+            ) : walks.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>No walks yet.</p>
+                <p className="text-sm">Start recording to see your walk history!</p>
+              </div>
+            ) : (
+              walks.map((walk) => (
+                <motion.button
+                  key={walk.id}
+                  onClick={() => handleWalkSelect(walk.id)}
+                  onDoubleClick={() => handleWalkDoubleClick(walk.id)}
+                  className={`w-full p-4 rounded-xl border transition-all text-left ${
+                    selectedWalk === walk.id
+                      ? "bg-primary/5 border-primary shadow-md"
+                      : "bg-card border-border hover:shadow-card"
+                  }`}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <div className="flex items-center gap-3 mb-2">
+                    {walk.dogs ? (
+                      <div className="w-8 h-8 rounded-full bg-amber-500/10 flex items-center justify-center overflow-hidden shrink-0">
+                        {walk.dogs.avatar_url ? (
+                          <img src={walk.dogs.avatar_url} alt={walk.dogs.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-sm">🐕</span>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+                        <span className="text-sm">🐕</span>
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium truncate">
+                          {format(new Date(walk.started_at), "MMM d, yyyy")}
+                        </span>
+                        <span className="text-primary font-semibold text-sm">
+                          {stopCounts[walk.id] || 0} sniffs
+                        </span>
+                      </div>
+                      {walk.dogs && (
+                        <span className="text-xs text-muted-foreground">{walk.dogs.name}</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground pl-11">
+                    <span>{formatDistance(walk.distance_m)}</span>
+                    <span>{formatDuration(walk.duration_s)}</span>
+                  </div>
+                </motion.button>
+              ))
+            )}
           </div>
         </div>
       </div>
