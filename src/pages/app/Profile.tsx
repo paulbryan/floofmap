@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { 
   User, Dog, LogOut, Download, Trash2, Shield, ChevronRight, 
   Bell, MapPin, FileJson, FileText, Loader2, AlertTriangle,
-  Pencil, Check, X, Camera
+  Pencil, Check, X, Camera, RefreshCw
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -93,6 +93,8 @@ const Profile = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [notifications, setNotifications] = useState(true);
   const [highAccuracy, setHighAccuracy] = useState(true);
+  const [refreshingLocation, setRefreshingLocation] = useState(false);
+  const [cachedLocation, setCachedLocation] = useState<{ lat: number; lon: number } | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -104,7 +106,7 @@ const Profile = () => {
 
       // Fetch profile, dogs, and walks in parallel
       const [profileResult, dogsResult, walksResult] = await Promise.all([
-        supabase.from("profiles").select("full_name, avatar_url").eq("id", user.id).single(),
+        supabase.from("profiles").select("full_name, avatar_url, cached_lat, cached_lon").eq("id", user.id).single(),
         supabase.from("dogs").select("id").eq("user_id", user.id).limit(1),
         supabase.from("walks").select("id, started_at, distance_m").eq("user_id", user.id).limit(100),
       ]);
@@ -114,6 +116,9 @@ const Profile = () => {
       }
       if (profileResult.data?.avatar_url) {
         setAvatarUrl(profileResult.data.avatar_url);
+      }
+      if (profileResult.data?.cached_lat && profileResult.data?.cached_lon) {
+        setCachedLocation({ lat: profileResult.data.cached_lat, lon: profileResult.data.cached_lon });
       }
 
       setHasDogs((dogsResult.data?.length ?? 0) > 0);
@@ -338,6 +343,51 @@ const Profile = () => {
     }
   };
 
+  const handleRefreshLocation = async () => {
+    if (!navigator.geolocation) {
+      toast({ title: "Not supported", description: "Your browser doesn't support geolocation.", variant: "destructive" });
+      return;
+    }
+
+    setRefreshingLocation(true);
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) throw new Error("Not authenticated");
+
+          const { error } = await supabase
+            .from("profiles")
+            .update({
+              cached_lat: pos.coords.latitude,
+              cached_lon: pos.coords.longitude,
+              location_updated_at: new Date().toISOString(),
+            })
+            .eq("id", user.id);
+
+          if (error) throw error;
+
+          setCachedLocation({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+          toast({ title: "Location updated!", description: "Your cached GPS location has been refreshed." });
+        } catch (error: any) {
+          toast({ title: "Update failed", description: error.message, variant: "destructive" });
+        } finally {
+          setRefreshingLocation(false);
+        }
+      },
+      (error) => {
+        setRefreshingLocation(false);
+        toast({
+          title: "Location error",
+          description: error.code === 1 ? "Please enable location access." : "Could not get your location.",
+          variant: "destructive",
+        });
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* Header */}
@@ -546,6 +596,36 @@ const Profile = () => {
                     </div>
                   </div>
                   <Switch checked={highAccuracy} onCheckedChange={setHighAccuracy} />
+                </div>
+                <div className="bg-card rounded-xl border border-border p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
+                      <RefreshCw className="w-5 h-5 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <p className="font-medium">Cached Location</p>
+                      <p className="text-xs text-muted-foreground">
+                        {cachedLocation 
+                          ? `${cachedLocation.lat.toFixed(4)}, ${cachedLocation.lon.toFixed(4)}`
+                          : "Not set"}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRefreshLocation}
+                    disabled={refreshingLocation}
+                  >
+                    {refreshingLocation ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-1" />
+                        Refresh
+                      </>
+                    )}
+                  </Button>
                 </div>
               </div>
             </motion.div>

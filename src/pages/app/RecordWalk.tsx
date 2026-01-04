@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Square, Pause, MapPin, Timer, Route, Activity, AlertTriangle, Navigation, Loader2, Dog, PlusCircle, ChevronDown, Check } from "lucide-react";
+import { Play, Square, Pause, MapPin, Timer, Route, Activity, AlertTriangle, Navigation, Loader2, Dog, PlusCircle, ChevronDown, Check, MapPinned } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import MapContainer from "@/components/map/MapContainer";
@@ -45,7 +45,8 @@ const RecordWalk = () => {
   const [dogs, setDogs] = useState<DogOption[]>([]);
   const [selectedDog, setSelectedDog] = useState<DogOption | null>(null);
   const [loadingDogs, setLoadingDogs] = useState(true);
-
+  const [showLocationUpdate, setShowLocationUpdate] = useState(false);
+  const usedCachedRef = useRef(false);
   const watchIdRef = useRef<number | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -99,6 +100,7 @@ const RecordWalk = () => {
       
       if (profile?.cached_lat && profile?.cached_lon) {
         setMapCenter([profile.cached_lon, profile.cached_lat]);
+        usedCachedRef.current = true;
       }
       
       // Then get actual GPS location (updates map center + sets currentPosition for recording)
@@ -107,6 +109,11 @@ const RecordWalk = () => {
           (pos) => {
             setMapCenter([pos.coords.longitude, pos.coords.latitude]);
             setCurrentPosition(pos);
+            // Show subtle indicator if we updated from cached location
+            if (usedCachedRef.current) {
+              setShowLocationUpdate(true);
+              setTimeout(() => setShowLocationUpdate(false), 2000);
+            }
           },
           () => {},
           { timeout: 5000, maximumAge: 60000, enableHighAccuracy: true }
@@ -495,6 +502,21 @@ const RecordWalk = () => {
               <Navigation className="w-5 h-5" />
             </Button>
           )}
+
+          {/* GPS update indicator */}
+          <AnimatePresence>
+            {showLocationUpdate && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="absolute top-4 left-1/2 -translate-x-1/2 z-20 bg-card/95 backdrop-blur rounded-full px-4 py-2 shadow-lg flex items-center gap-2 text-sm"
+              >
+                <MapPinned className="w-4 h-4 text-primary" />
+                <span>Location updated</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Status overlay */}
           <AnimatePresence>
