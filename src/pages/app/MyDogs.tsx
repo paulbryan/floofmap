@@ -194,24 +194,12 @@ const MyDogs = () => {
     setIsSaving(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-
-      // Use upsert to handle re-inviting previously revoked walkers
-      const { error } = await supabase.from("dog_walkers").upsert({
-        dog_id: selectedDog.id,
-        owner_user_id: user.id,
-        walker_user_id: "00000000-0000-0000-0000-000000000000",
-        walker_email: walkerEmail.toLowerCase(),
-        status: "pending",
-        revoked_at: null,
-        accepted_at: null,
-      }, {
-        onConflict: "dog_id,walker_email",
-        ignoreDuplicates: false,
+      // Use secure RPC function to invite walker (handles upsert server-side)
+      const { error } = await supabase.rpc("invite_dog_walker", {
+        p_dog_id: selectedDog.id,
+        p_walker_email: walkerEmail.toLowerCase(),
       });
 
-      // Silently handle errors to prevent email enumeration
       if (error) {
         console.error("Invite error:", error.message);
         throw new Error("Unable to send invite. Please try again.");
@@ -244,25 +232,11 @@ const MyDogs = () => {
     setIsSaving(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-
-      // Use upsert to handle re-inviting previously revoked walkers
-      const invites = selectedDogIds.map(dogId => ({
-        dog_id: dogId,
-        owner_user_id: user.id,
-        walker_user_id: "00000000-0000-0000-0000-000000000000",
-        walker_email: walkerEmail.toLowerCase(),
-        status: "pending",
-        revoked_at: null,
-        accepted_at: null,
-      }));
-
-      // Process invites one by one for upsert with conflict handling
-      for (const invite of invites) {
-        const { error } = await supabase.from("dog_walkers").upsert(invite, {
-          onConflict: "dog_id,walker_email",
-          ignoreDuplicates: false,
+      // Use secure RPC function for each invite (handles upsert server-side)
+      for (const dogId of selectedDogIds) {
+        const { error } = await supabase.rpc("invite_dog_walker", {
+          p_dog_id: dogId,
+          p_walker_email: walkerEmail.toLowerCase(),
         });
         
         if (error) {
