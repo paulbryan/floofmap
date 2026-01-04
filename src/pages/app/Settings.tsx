@@ -44,7 +44,6 @@ const Settings = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Fetch all walks
       const { data: walks, error: walksError } = await supabase
         .from("walks")
         .select("*")
@@ -53,7 +52,6 @@ const Settings = () => {
 
       if (walksError) throw walksError;
 
-      // Fetch all track points
       const { data: trackPoints, error: pointsError } = await supabase
         .from("track_points")
         .select("*")
@@ -62,7 +60,6 @@ const Settings = () => {
 
       if (pointsError) throw pointsError;
 
-      // Generate GPX
       const gpxContent = generateGPX(walks || [], trackPoints || []);
       downloadFile(gpxContent, "floofmap-walks.gpx", "application/gpx+xml");
 
@@ -88,7 +85,6 @@ const Settings = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Fetch all user data
       const { data: walks } = await supabase
         .from("walks")
         .select("*")
@@ -145,7 +141,6 @@ const Settings = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Delete all walks (cascade will handle track_points and stop_events)
       const { error } = await supabase
         .from("walks")
         .delete()
@@ -175,12 +170,10 @@ const Settings = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Delete all user data first
       await supabase.from("dogs").delete().eq("user_id", user.id);
       await supabase.from("walks").delete().eq("user_id", user.id);
       await supabase.from("profiles").delete().eq("id", user.id);
 
-      // Sign out (account deletion would require admin API in production)
       await supabase.auth.signOut();
 
       toast({
@@ -205,7 +198,7 @@ const Settings = () => {
     <div className="min-h-screen bg-background pb-24">
       {/* Header */}
       <div className="bg-card border-b border-border sticky top-0 z-50">
-        <div className="px-4 py-4">
+        <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
@@ -219,196 +212,204 @@ const Settings = () => {
         </div>
       </div>
 
-      <div className="px-4 py-6 space-y-8">
-        {/* Preferences */}
-        <motion.section
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <h2 className="font-semibold mb-4 flex items-center gap-2">
-            <SettingsIcon className="w-5 h-5 text-primary" />
-            Preferences
-          </h2>
-          <div className="space-y-4">
-            <div className="bg-card rounded-xl border border-border p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
-                  <Bell className="w-5 h-5 text-muted-foreground" />
+      <div className="max-w-4xl mx-auto px-4 py-6">
+        <div className="md:grid md:grid-cols-2 md:gap-8 space-y-8 md:space-y-0">
+          {/* Left column */}
+          <div className="space-y-8">
+            {/* Preferences */}
+            <motion.section
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <h2 className="font-semibold mb-4 flex items-center gap-2">
+                <SettingsIcon className="w-5 h-5 text-primary" />
+                Preferences
+              </h2>
+              <div className="space-y-4">
+                <div className="bg-card rounded-xl border border-border p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
+                      <Bell className="w-5 h-5 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <p className="font-medium">Notifications</p>
+                      <p className="text-sm text-muted-foreground">Walk reminders & updates</p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={notifications}
+                    onCheckedChange={setNotifications}
+                  />
                 </div>
-                <div>
-                  <p className="font-medium">Notifications</p>
-                  <p className="text-sm text-muted-foreground">Walk reminders & updates</p>
+                <div className="bg-card rounded-xl border border-border p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
+                      <MapPin className="w-5 h-5 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <p className="font-medium">High Accuracy GPS</p>
+                      <p className="text-sm text-muted-foreground">Uses more battery</p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={highAccuracy}
+                    onCheckedChange={setHighAccuracy}
+                  />
                 </div>
               </div>
-              <Switch
-                checked={notifications}
-                onCheckedChange={setNotifications}
-              />
-            </div>
-            <div className="bg-card rounded-xl border border-border p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
-                  <MapPin className="w-5 h-5 text-muted-foreground" />
-                </div>
-                <div>
-                  <p className="font-medium">High Accuracy GPS</p>
-                  <p className="text-sm text-muted-foreground">Uses more battery</p>
-                </div>
+            </motion.section>
+
+            {/* Export Data */}
+            <motion.section
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              <h2 className="font-semibold mb-4 flex items-center gap-2">
+                <Download className="w-5 h-5 text-primary" />
+                Export Data
+              </h2>
+              <div className="space-y-3">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={handleExportGPX}
+                  disabled={isExporting}
+                >
+                  {isExporting ? (
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  ) : (
+                    <FileText className="w-5 h-5 mr-2" />
+                  )}
+                  Export as GPX
+                  <span className="ml-auto text-xs text-muted-foreground">For GPS apps</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={handleExportJSON}
+                  disabled={isExporting}
+                >
+                  {isExporting ? (
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  ) : (
+                    <FileJson className="w-5 h-5 mr-2" />
+                  )}
+                  Export as JSON
+                  <span className="ml-auto text-xs text-muted-foreground">Complete data</span>
+                </Button>
               </div>
-              <Switch
-                checked={highAccuracy}
-                onCheckedChange={setHighAccuracy}
-              />
-            </div>
+            </motion.section>
           </div>
-        </motion.section>
 
-        {/* Export Data */}
-        <motion.section
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-        >
-          <h2 className="font-semibold mb-4 flex items-center gap-2">
-            <Download className="w-5 h-5 text-primary" />
-            Export Data
-          </h2>
-          <div className="space-y-3">
-            <Button
-              variant="outline"
-              className="w-full justify-start"
-              onClick={handleExportGPX}
-              disabled={isExporting}
+          {/* Right column */}
+          <div className="space-y-8">
+            {/* Privacy */}
+            <motion.section
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
             >
-              {isExporting ? (
-                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-              ) : (
-                <FileText className="w-5 h-5 mr-2" />
-              )}
-              Export as GPX
-              <span className="ml-auto text-xs text-muted-foreground">For GPS apps</span>
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full justify-start"
-              onClick={handleExportJSON}
-              disabled={isExporting}
-            >
-              {isExporting ? (
-                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-              ) : (
-                <FileJson className="w-5 h-5 mr-2" />
-              )}
-              Export as JSON
-              <span className="ml-auto text-xs text-muted-foreground">Complete data</span>
-            </Button>
-          </div>
-        </motion.section>
-
-        {/* Privacy */}
-        <motion.section
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          <h2 className="font-semibold mb-4 flex items-center gap-2">
-            <Shield className="w-5 h-5 text-primary" />
-            Privacy & Data
-          </h2>
-          <div className="space-y-3">
-            <Button
-              variant="outline"
-              className="w-full justify-start"
-              onClick={() => navigate("/privacy")}
-            >
-              <Shield className="w-5 h-5 mr-2" />
-              Privacy Policy
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full justify-start"
-              onClick={() => navigate("/terms")}
-            >
-              <FileText className="w-5 h-5 mr-2" />
-              Terms of Service
-            </Button>
-          </div>
-        </motion.section>
-
-        {/* Danger Zone */}
-        <motion.section
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-        >
-          <h2 className="font-semibold mb-4 flex items-center gap-2 text-destructive">
-            <AlertTriangle className="w-5 h-5" />
-            Danger Zone
-          </h2>
-          <div className="space-y-3">
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
+              <h2 className="font-semibold mb-4 flex items-center gap-2">
+                <Shield className="w-5 h-5 text-primary" />
+                Privacy & Data
+              </h2>
+              <div className="space-y-3">
                 <Button
                   variant="outline"
-                  className="w-full justify-start border-destructive/30 text-destructive hover:bg-destructive/5"
-                  disabled={isDeleting}
+                  className="w-full justify-start"
+                  onClick={() => navigate("/privacy")}
                 >
-                  <Trash2 className="w-5 h-5 mr-2" />
-                  Delete All Walks
+                  <Shield className="w-5 h-5 mr-2" />
+                  Privacy Policy
                 </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete All Walks?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This will permanently delete all your walk history, including 
-                    track points and sniff stops. This action cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={handleDeleteAllWalks}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  >
-                    Delete All Walks
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
                 <Button
                   variant="outline"
-                  className="w-full justify-start border-destructive/30 text-destructive hover:bg-destructive/5"
-                  disabled={isDeleting}
+                  className="w-full justify-start"
+                  onClick={() => navigate("/terms")}
                 >
-                  <Trash2 className="w-5 h-5 mr-2" />
-                  Delete Account
+                  <FileText className="w-5 h-5 mr-2" />
+                  Terms of Service
                 </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete Your Account?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This will permanently delete your account and all associated data, 
-                    including dogs, walks, and settings. This action cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={handleDeleteAccount}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  >
-                    Delete Account
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+              </div>
+            </motion.section>
+
+            {/* Danger Zone */}
+            <motion.section
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <h2 className="font-semibold mb-4 flex items-center gap-2 text-destructive">
+                <AlertTriangle className="w-5 h-5" />
+                Danger Zone
+              </h2>
+              <div className="space-y-3">
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start border-destructive/30 text-destructive hover:bg-destructive/5"
+                      disabled={isDeleting}
+                    >
+                      <Trash2 className="w-5 h-5 mr-2" />
+                      Delete All Walks
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete All Walks?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will permanently delete all your walk history, including 
+                        track points and sniff stops. This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleDeleteAllWalks}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        Delete All Walks
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start border-destructive/30 text-destructive hover:bg-destructive/5"
+                      disabled={isDeleting}
+                    >
+                      <Trash2 className="w-5 h-5 mr-2" />
+                      Delete Account
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete Your Account?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will permanently delete your account and all associated data, 
+                        including dogs, walks, and settings. This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleDeleteAccount}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        Delete Account
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            </motion.section>
           </div>
-        </motion.section>
+        </div>
       </div>
     </div>
   );

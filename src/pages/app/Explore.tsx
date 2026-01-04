@@ -120,107 +120,115 @@ const Explore = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-card border-b border-border p-4 pt-12">
-        <h1 className="text-2xl font-bold mb-4">Explore</h1>
-        
-        {/* Search */}
-        <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-          <Input
-            type="text"
-            placeholder="Search locations..."
-            className="pl-10"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-
-        {/* Filters */}
-        <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4">
-          {filters.map((filter) => (
-            <button
-              key={filter.key}
-              onClick={() => setActiveFilter(filter.key)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-all ${
-                activeFilter === filter.key
-                  ? "bg-primary text-primary-foreground shadow-md"
-                  : `${filter.color} text-foreground hover:shadow-sm`
-              }`}
-            >
-              {filter.icon}
-              {filter.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Map area */}
-      <div className="h-[40vh] relative">
-        <MapContainer
-          className="h-full w-full"
-          center={mapCenter}
-          zoom={14}
-          onMapLoad={handleMapLoad}
-        />
-
-        {/* Center on location button */}
-        <Button
-          onClick={handleCenterOnLocation}
-          size="icon"
-          variant="secondary"
-          className="absolute bottom-4 right-4 z-10 shadow-lg"
-        >
-          <Navigation className="w-5 h-5" />
-        </Button>
-
-        {/* Legend */}
-        <div className="absolute bottom-4 left-4 bg-card/95 backdrop-blur rounded-xl shadow-card p-3 z-10">
-          <div className="flex items-center gap-3 text-xs">
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded-full bg-accent" />
-              <span>Water</span>
+      <div className="bg-card border-b border-border p-4 pt-6 md:pt-4">
+        <div className="max-w-7xl mx-auto">
+          <h1 className="text-2xl font-bold mb-4">Explore</h1>
+          
+          {/* Search and Filters - responsive layout */}
+          <div className="flex flex-col md:flex-row md:items-center gap-4">
+            {/* Search */}
+            <div className="relative flex-1 md:max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search locations..."
+                className="pl-10"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded-full bg-muted" />
-              <span>Bin</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded-full bg-primary" />
-              <span>Sniff</span>
+
+            {/* Filters */}
+            <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
+              {filters.map((filter) => (
+                <button
+                  key={filter.key}
+                  onClick={() => setActiveFilter(filter.key)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-all ${
+                    activeFilter === filter.key
+                      ? "bg-primary text-primary-foreground shadow-md"
+                      : `${filter.color} text-foreground hover:shadow-sm`
+                  }`}
+                >
+                  {filter.icon}
+                  {filter.label}
+                </button>
+              ))}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Walk history */}
-      <div className="p-4">
-        <h2 className="font-semibold mb-3 flex items-center gap-2">
-          <MapPin className="w-5 h-5 text-primary" />
-          Walk History
-        </h2>
+      {/* Main content - side by side on desktop */}
+      <div className="max-w-7xl mx-auto md:flex md:gap-6 md:p-6">
+        {/* Map area */}
+        <div className="h-[40vh] md:h-[calc(100vh-200px)] md:flex-1 md:rounded-xl md:overflow-hidden md:shadow-card relative">
+          <MapContainer
+            className="h-full w-full"
+            center={mapCenter}
+            zoom={14}
+            onMapLoad={handleMapLoad}
+          />
 
-        <div className="space-y-3">
-          {mockWalks.map((walk) => (
-            <motion.button
-              key={walk.id}
-              onClick={() => handleWalkSelect(walk.id)}
-              className={`w-full p-4 rounded-xl border transition-all text-left ${
-                selectedWalk === walk.id
-                  ? "bg-primary/5 border-primary shadow-md"
-                  : "bg-card border-border hover:shadow-card"
-              }`}
-              whileTap={{ scale: 0.98 }}
-            >
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-medium">{walk.date}</span>
-                <span className="text-primary font-semibold">{walk.sniffs} sniffs</span>
+          {/* Center on location button */}
+          <Button
+            onClick={handleCenterOnLocation}
+            size="icon"
+            variant="secondary"
+            className="absolute bottom-4 right-4 z-10 shadow-lg"
+          >
+            <Navigation className="w-5 h-5" />
+          </Button>
+
+          {/* Legend */}
+          <div className="absolute bottom-4 left-4 bg-card/95 backdrop-blur rounded-xl shadow-card p-3 z-10">
+            <div className="flex items-center gap-3 text-xs">
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded-full bg-accent" />
+                <span>Water</span>
               </div>
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <span>{walk.distance} km</span>
-                <span>{walk.duration} min</span>
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded-full bg-muted" />
+                <span>Bin</span>
               </div>
-            </motion.button>
-          ))}
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded-full bg-primary" />
+                <span>Sniff</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Walk history */}
+        <div className="p-4 md:p-0 md:w-80 lg:w-96 md:shrink-0">
+          <h2 className="font-semibold mb-3 flex items-center gap-2">
+            <MapPin className="w-5 h-5 text-primary" />
+            Walk History
+          </h2>
+
+          <div className="space-y-3 md:max-h-[calc(100vh-280px)] md:overflow-y-auto md:pr-2">
+            {mockWalks.map((walk) => (
+              <motion.button
+                key={walk.id}
+                onClick={() => handleWalkSelect(walk.id)}
+                className={`w-full p-4 rounded-xl border transition-all text-left ${
+                  selectedWalk === walk.id
+                    ? "bg-primary/5 border-primary shadow-md"
+                    : "bg-card border-border hover:shadow-card"
+                }`}
+                whileTap={{ scale: 0.98 }}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-medium">{walk.date}</span>
+                  <span className="text-primary font-semibold">{walk.sniffs} sniffs</span>
+                </div>
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <span>{walk.distance} km</span>
+                  <span>{walk.duration} min</span>
+                </div>
+              </motion.button>
+            ))}
+          </div>
         </div>
       </div>
     </div>

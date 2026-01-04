@@ -384,8 +384,8 @@ const MyDogs = () => {
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* Header */}
-      <div className="bg-gradient-to-b from-primary/10 to-background px-4 pt-12 pb-6">
-        <div className="flex items-center gap-3 mb-4">
+      <div className="bg-gradient-to-b from-primary/10 to-background px-4 pt-6 md:pt-4 pb-6">
+        <div className="max-w-4xl mx-auto flex items-center gap-3 mb-4">
           <Button variant="ghost" size="icon" onClick={() => navigate("/app/profile")}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
@@ -393,48 +393,49 @@ const MyDogs = () => {
         </div>
       </div>
 
-      {/* Pending Invites */}
-      {pendingInvites.length > 0 && (
-        <div className="px-4 py-4">
-          <h2 className="font-semibold mb-3 flex items-center gap-2">
-            <Mail className="w-5 h-5 text-primary" />
-            Pending Invites
-          </h2>
-          <div className="space-y-2">
-            {pendingInvites.map((invite) => (
-              <motion.div
-                key={invite.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-card rounded-xl border border-border p-4"
-              >
-                <p className="font-medium mb-2">
-                  You've been invited to walk {invite.dog_name || "a dog"}
-                </p>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    onClick={() => handleAcceptInvite(invite)}
-                    className="gap-1"
-                  >
-                    <Check className="w-4 h-4" />
-                    Accept
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleDeclineInvite(invite)}
-                    className="gap-1"
-                  >
-                    <X className="w-4 h-4" />
-                    Decline
-                  </Button>
-                </div>
-              </motion.div>
-            ))}
+      <div className="max-w-4xl mx-auto">
+        {/* Pending Invites */}
+        {pendingInvites.length > 0 && (
+          <div className="px-4 py-4">
+            <h2 className="font-semibold mb-3 flex items-center gap-2">
+              <Mail className="w-5 h-5 text-primary" />
+              Pending Invites
+            </h2>
+            <div className="space-y-2 md:grid md:grid-cols-2 md:gap-4 md:space-y-0">
+              {pendingInvites.map((invite) => (
+                <motion.div
+                  key={invite.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-card rounded-xl border border-border p-4"
+                >
+                  <p className="font-medium mb-2">
+                    You've been invited to walk {invite.dog_name || "a dog"}
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => handleAcceptInvite(invite)}
+                      className="gap-1"
+                    >
+                      <Check className="w-4 h-4" />
+                      Accept
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleDeclineInvite(invite)}
+                      className="gap-1"
+                    >
+                      <X className="w-4 h-4" />
+                      Decline
+                    </Button>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* My Dogs */}
       <div className="px-4 py-4">
@@ -575,7 +576,7 @@ const MyDogs = () => {
             <p className="text-muted-foreground">No dogs yet. Add your first dog!</p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-3 md:grid md:grid-cols-2 md:gap-4 md:space-y-0">
             {dogs.map((dog, index) => (
               <motion.div
                 key={dog.id}
@@ -676,7 +677,7 @@ const MyDogs = () => {
             <Users className="w-5 h-5 text-secondary" />
             Dogs I Walk
           </h2>
-          <div className="space-y-3">
+          <div className="space-y-3 md:grid md:grid-cols-2 md:gap-4 md:space-y-0">
             {sharedDogs.map((dog, index) => (
               <motion.div
                 key={dog.id}
@@ -722,6 +723,7 @@ const MyDogs = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      </div>
     </div>
   );
 };
