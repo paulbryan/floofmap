@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Play, MapPin, User, Dog, Settings } from "lucide-react";
+import { Home, Play, MapPin, User, Dog } from "lucide-react";
 import { motion } from "framer-motion";
 
 const navItems = [
@@ -8,7 +8,6 @@ const navItems = [
   { icon: MapPin, label: "Explore", path: "/app/explore" },
   { icon: Dog, label: "My Dogs", path: "/app/dogs" },
   { icon: User, label: "Profile", path: "/app/profile" },
-  { icon: Settings, label: "Settings", path: "/app/settings" },
 ];
 
 const DesktopSidebar = () => {
@@ -67,19 +66,6 @@ const DesktopSidebar = () => {
           );
         })}
       </nav>
-
-      {/* Footer */}
-      <div className="p-4 border-t border-border">
-        <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-muted/50">
-          <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-lg">
-            🐕
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="font-medium truncate">My Dog</p>
-            <p className="text-xs text-muted-foreground">Ready to walk!</p>
-          </div>
-        </div>
-      </div>
     </aside>
   );
 };
