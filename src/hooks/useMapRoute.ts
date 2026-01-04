@@ -6,6 +6,10 @@ interface TrackPoint {
   lon: number;
 }
 
+interface PositionWithAccuracy extends TrackPoint {
+  accuracy?: number; // accuracy in meters
+}
+
 interface UseMapRouteOptions {
   routeColor?: string;
   routeWidth?: number;
@@ -162,9 +166,14 @@ export const useMapRoute = (options: UseMapRouteOptions = {}) => {
     }
   }, []);
 
-  const updateCurrentPosition = useCallback((point: TrackPoint) => {
+  const updateCurrentPosition = useCallback((point: PositionWithAccuracy) => {
     const map = mapRef.current;
     if (!map) return;
+
+    // Update accuracy circle
+    if (point.accuracy && point.accuracy > 0) {
+      updateAccuracyCircle(map, point.lat, point.lon, point.accuracy);
+    }
 
     // Remove existing position marker
     const existingMarker = markersRef.current.find(
@@ -203,6 +212,72 @@ function createMarker(point: TrackPoint, type: 'start' | 'end' | 'current'): map
   }
 
   return new maplibregl.Marker({ element: el }).setLngLat([point.lon, point.lat]);
+}
+
+// Create a GeoJSON circle from a center point and radius in meters
+function createGeoJSONCircle(lat: number, lon: number, radiusMeters: number, points = 64): GeoJSON.Feature<GeoJSON.Polygon> {
+  const coords: [number, number][] = [];
+  const km = radiusMeters / 1000;
+  const distanceX = km / (111.32 * Math.cos((lat * Math.PI) / 180));
+  const distanceY = km / 110.574;
+
+  for (let i = 0; i < points; i++) {
+    const theta = (i / points) * (2 * Math.PI);
+    const x = distanceX * Math.cos(theta);
+    const y = distanceY * Math.sin(theta);
+    coords.push([lon + x, lat + y]);
+  }
+  coords.push(coords[0]); // Close the polygon
+
+  return {
+    type: 'Feature',
+    properties: {},
+    geometry: {
+      type: 'Polygon',
+      coordinates: [coords],
+    },
+  };
+}
+
+function updateAccuracyCircle(map: maplibregl.Map, lat: number, lon: number, accuracy: number) {
+  const sourceId = 'accuracy-circle-source';
+  const layerId = 'accuracy-circle-layer';
+  
+  const circleData = createGeoJSONCircle(lat, lon, accuracy);
+
+  const source = map.getSource(sourceId) as maplibregl.GeoJSONSource;
+  if (source) {
+    source.setData(circleData);
+  } else {
+    // Add source and layer if they don't exist
+    map.addSource(sourceId, {
+      type: 'geojson',
+      data: circleData,
+    });
+
+    // Insert accuracy layer below route layers but above base map
+    map.addLayer({
+      id: layerId,
+      type: 'fill',
+      source: sourceId,
+      paint: {
+        'fill-color': '#F97316',
+        'fill-opacity': 0.15,
+      },
+    });
+
+    // Add a subtle border
+    map.addLayer({
+      id: `${layerId}-border`,
+      type: 'line',
+      source: sourceId,
+      paint: {
+        'line-color': '#F97316',
+        'line-width': 1.5,
+        'line-opacity': 0.4,
+      },
+    });
+  }
 }
 
 export default useMapRoute;
