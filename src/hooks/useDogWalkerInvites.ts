@@ -32,27 +32,18 @@ export const useDogWalkerInvites = () => {
   };
 
   const acceptInvite = async (inviteId: string) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("Not authenticated");
-
-    const { error } = await supabase
-      .from("dog_walkers")
-      .update({
-        status: "active",
-        walker_user_id: user.id,
-        accepted_at: new Date().toISOString(),
-      })
-      .eq("id", inviteId);
+    const { error } = await supabase.rpc("accept_dog_walker_invite", {
+      p_invite_id: inviteId,
+    });
 
     if (error) throw error;
     await checkInvites();
   };
 
   const declineInvite = async (inviteId: string) => {
-    const { error } = await supabase
-      .from("dog_walkers")
-      .delete()
-      .eq("id", inviteId);
+    const { error } = await supabase.rpc("decline_dog_walker_invite", {
+      p_invite_id: inviteId,
+    });
 
     if (error) throw error;
     await checkInvites();
