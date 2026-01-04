@@ -173,13 +173,13 @@ Below are screenshots of the app, in order of the user journey:
 
 ![Onboarding](docs/onboarding.png)
 
-### Profile
-
-![Profile](docs/profile.png)
-
 ### Dashboard
 
 ![Dashboard](docs/dashboard.png)
+
+### Profile
+
+![Profile](docs/profile.png)
 
 ### Start Walk
 
