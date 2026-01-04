@@ -309,7 +309,47 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      dog_walkers_safe: {
+        Row: {
+          accepted_at: string | null
+          created_at: string | null
+          dog_id: string | null
+          id: string | null
+          owner_user_id: string | null
+          revoked_at: string | null
+          status: string | null
+          walker_user_id: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string | null
+          dog_id?: string | null
+          id?: string | null
+          owner_user_id?: string | null
+          revoked_at?: string | null
+          status?: string | null
+          walker_user_id?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string | null
+          dog_id?: string | null
+          id?: string | null
+          owner_user_id?: string | null
+          revoked_at?: string | null
+          status?: string | null
+          walker_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dog_walkers_dog_id_fkey"
+            columns: ["dog_id"]
+            isOneToOne: false
+            referencedRelation: "dogs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       blur_coordinate: { Args: { coord: number }; Returns: number }
