@@ -201,8 +201,8 @@ const RecordWalk = () => {
     // Update map center on first position
     setMapCenter([lon, lat]);
     
-    // Update current position marker on map
-    updateCurrentPosition({ lat, lon });
+    // Update current position marker on map with accuracy circle
+    updateCurrentPosition({ lat, lon, accuracy: position.coords.accuracy });
     
     if (isRecording && !isPaused) {
       const newPoint: TrackPoint = {
