@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Play, MapPin, TrendingUp, Calendar, Dog, ChevronRight, PlusCircle } from "lucide-react";
+import { Play, MapPin, TrendingUp, Calendar, Dog, ChevronRight, PlusCircle, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, startOfDay, subDays, isEqual, isBefore } from "date-fns";
 
 interface Walk {
   id: string;
@@ -19,7 +19,55 @@ interface Stats {
   totalDistance: string;
   avgSniffs: number;
   streak: number;
+  walkedToday: boolean;
 }
+
+// Calculate consecutive days streak from walk dates
+const calculateStreak = (walks: Walk[]): { streak: number; walkedToday: boolean } => {
+  if (walks.length === 0) return { streak: 0, walkedToday: false };
+
+  // Get unique days with walks (in local timezone)
+  const walkDays = new Set<string>();
+  walks.forEach(walk => {
+    const day = startOfDay(new Date(walk.started_at)).toISOString();
+    walkDays.add(day);
+  });
+
+  const sortedDays = Array.from(walkDays)
+    .map(d => new Date(d))
+    .sort((a, b) => b.getTime() - a.getTime()); // Most recent first
+
+  if (sortedDays.length === 0) return { streak: 0, walkedToday: false };
+
+  const today = startOfDay(new Date());
+  const yesterday = startOfDay(subDays(new Date(), 1));
+  const mostRecentWalkDay = sortedDays[0];
+
+  // Check if walked today
+  const walkedToday = isEqual(mostRecentWalkDay, today);
+
+  // Streak must start from today or yesterday
+  if (!isEqual(mostRecentWalkDay, today) && !isEqual(mostRecentWalkDay, yesterday)) {
+    return { streak: 0, walkedToday: false };
+  }
+
+  // Count consecutive days
+  let streak = 1;
+  let checkDay = mostRecentWalkDay;
+
+  for (let i = 1; i < sortedDays.length; i++) {
+    const expectedPrevDay = startOfDay(subDays(checkDay, 1));
+    if (isEqual(sortedDays[i], expectedPrevDay)) {
+      streak++;
+      checkDay = sortedDays[i];
+    } else if (isBefore(sortedDays[i], expectedPrevDay)) {
+      // Gap in streak
+      break;
+    }
+  }
+
+  return { streak, walkedToday };
+};
 
 const AppHome = () => {
   const [userName, setUserName] = useState("");
@@ -30,6 +78,7 @@ const AppHome = () => {
     totalDistance: "0 km",
     avgSniffs: 0,
     streak: 0,
+    walkedToday: false,
   });
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -42,14 +91,20 @@ const AppHome = () => {
       }
 
       if (user) {
-        // Fetch recent walks and dogs in parallel
-        const [walksResult, dogsResult] = await Promise.all([
+        // Fetch walks (more for streak calculation) and dogs in parallel
+        const [walksResult, allWalksResult, dogsResult] = await Promise.all([
           supabase
             .from("walks")
             .select("id, started_at, distance_m, duration_s, sniff_time_s")
             .eq("user_id", user.id)
             .order("started_at", { ascending: false })
             .limit(5),
+          supabase
+            .from("walks")
+            .select("id, started_at, distance_m, duration_s, sniff_time_s")
+            .eq("user_id", user.id)
+            .order("started_at", { ascending: false })
+            .limit(100), // Get more walks for accurate streak calculation
           supabase
             .from("dogs")
             .select("id")
@@ -58,23 +113,26 @@ const AppHome = () => {
         ]);
 
         const walks = walksResult.data;
+        const allWalks = allWalksResult.data || [];
         setHasDogs((dogsResult.data?.length ?? 0) > 0);
 
         if (walks) {
           setRecentWalks(walks);
 
-          // Calculate stats
-          const totalDistance = walks.reduce((sum, w) => sum + (w.distance_m || 0), 0);
-          const totalSniffTime = walks.reduce((sum, w) => sum + (w.sniff_time_s || 0), 0);
-          const avgSniffs = walks.length > 0 ? Math.round(totalSniffTime / walks.length / 60) : 0;
+          // Calculate stats from all walks
+          const totalDistance = allWalks.reduce((sum, w) => sum + (w.distance_m || 0), 0);
+          const totalSniffTime = allWalks.reduce((sum, w) => sum + (w.sniff_time_s || 0), 0);
+          const avgSniffs = allWalks.length > 0 ? Math.round(totalSniffTime / allWalks.length / 60) : 0;
+          const { streak, walkedToday } = calculateStreak(allWalks);
 
           setStats({
-            totalWalks: walks.length,
+            totalWalks: allWalks.length,
             totalDistance: totalDistance >= 1000 
               ? `${(totalDistance / 1000).toFixed(1)} km` 
               : `${Math.round(totalDistance)} m`,
             avgSniffs: avgSniffs,
-            streak: 0, // TODO: Calculate streak
+            streak,
+            walkedToday,
           });
         }
       }
@@ -178,9 +236,21 @@ const AppHome = () => {
                 <p className="text-2xl lg:text-3xl font-bold text-accent">{stats.avgSniffs}</p>
                 <p className="text-sm text-muted-foreground">Avg Sniffs/Walk</p>
               </div>
-              <div className="bg-card rounded-xl p-4 lg:p-6 border border-border">
-                <p className="text-2xl lg:text-3xl font-bold text-amber-500">{stats.streak} 🔥</p>
-                <p className="text-sm text-muted-foreground">Day Streak</p>
+              <div className="bg-card rounded-xl p-4 lg:p-6 border border-border relative overflow-hidden">
+                {stats.streak > 0 && (
+                  <div className="absolute -right-2 -top-2 w-16 h-16 bg-gradient-to-br from-amber-500/20 to-orange-500/10 rounded-full blur-xl" />
+                )}
+                <div className="relative flex items-center gap-2">
+                  <p className="text-2xl lg:text-3xl font-bold text-amber-500">{stats.streak}</p>
+                  <Flame className={`w-6 h-6 ${stats.streak > 0 ? "text-amber-500" : "text-muted-foreground"}`} />
+                </div>
+                <p className="text-sm text-muted-foreground relative">Day Streak</p>
+                {stats.streak > 0 && !stats.walkedToday && (
+                  <p className="text-xs text-amber-600 mt-1">Walk today to keep it!</p>
+                )}
+                {stats.walkedToday && stats.streak > 0 && (
+                  <p className="text-xs text-green-600 mt-1">✓ Walked today</p>
+                )}
               </div>
             </motion.div>
           </div>
