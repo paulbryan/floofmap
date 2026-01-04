@@ -2,6 +2,7 @@ import { Outlet, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import BottomNav from "@/components/app/BottomNav";
+import DesktopSidebar from "@/components/app/DesktopSidebar";
 import { Loader2 } from "lucide-react";
 
 const AppLayout = () => {
@@ -42,9 +43,19 @@ const AppLayout = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      <Outlet />
-      <BottomNav />
+    <div className="min-h-screen bg-background flex">
+      {/* Desktop sidebar - hidden on mobile */}
+      <DesktopSidebar />
+      
+      {/* Main content area */}
+      <div className="flex-1 pb-20 lg:pb-0">
+        <Outlet />
+      </div>
+      
+      {/* Mobile bottom nav - hidden on desktop */}
+      <div className="lg:hidden">
+        <BottomNav />
+      </div>
     </div>
   );
 };
