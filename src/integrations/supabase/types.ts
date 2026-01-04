@@ -376,6 +376,10 @@ export type Database = {
         Args: { p_dog_id: string; p_user_id: string }
         Returns: boolean
       }
+      invite_dog_walker: {
+        Args: { p_dog_id: string; p_walker_email: string }
+        Returns: string
+      }
       owns_dog: {
         Args: { p_dog_id: string; p_user_id: string }
         Returns: boolean
