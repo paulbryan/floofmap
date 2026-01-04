@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { 
   User, Dog, LogOut, Download, Trash2, Shield, ChevronRight, 
   Bell, MapPin, FileJson, FileText, Loader2, AlertTriangle,
-  Pencil, Check, X
+  Pencil, Check, X, Camera
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -80,10 +80,13 @@ const Profile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [userEmail, setUserEmail] = useState("");
+  const [userId, setUserId] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [editingName, setEditingName] = useState(false);
   const [newDisplayName, setNewDisplayName] = useState("");
   const [savingName, setSavingName] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [hasDogs, setHasDogs] = useState(false);
   const [stats, setStats] = useState<Stats | null>(null);
   const [isExporting, setIsExporting] = useState(false);
@@ -97,16 +100,20 @@ const Profile = () => {
       if (!user) return;
 
       setUserEmail(user.email || "");
+      setUserId(user.id);
 
       // Fetch profile, dogs, and walks in parallel
       const [profileResult, dogsResult, walksResult] = await Promise.all([
-        supabase.from("profiles").select("full_name").eq("id", user.id).single(),
+        supabase.from("profiles").select("full_name, avatar_url").eq("id", user.id).single(),
         supabase.from("dogs").select("id").eq("user_id", user.id).limit(1),
         supabase.from("walks").select("id, started_at, distance_m").eq("user_id", user.id).limit(100),
       ]);
 
       if (profileResult.data?.full_name) {
         setDisplayName(profileResult.data.full_name);
+      }
+      if (profileResult.data?.avatar_url) {
+        setAvatarUrl(profileResult.data.avatar_url);
       }
 
       setHasDogs((dogsResult.data?.length ?? 0) > 0);
@@ -155,6 +162,64 @@ const Profile = () => {
       });
     } finally {
       setSavingName(false);
+    }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !userId) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({ title: "Invalid file", description: "Please upload an image file.", variant: "destructive" });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "File too large", description: "Please upload an image under 5MB.", variant: "destructive" });
+      return;
+    }
+
+    setUploadingAvatar(true);
+
+    try {
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${userId}/avatar.${fileExt}`;
+
+      // Upload to storage
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      // Add cache-busting timestamp
+      const urlWithTimestamp = `${publicUrl}?t=${Date.now()}`;
+
+      // Update profile with new avatar URL
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: urlWithTimestamp })
+        .eq('id', userId);
+
+      if (updateError) throw updateError;
+
+      setAvatarUrl(urlWithTimestamp);
+      toast({ title: "Avatar updated!" });
+    } catch (error: any) {
+      toast({
+        title: "Upload failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingAvatar(false);
     }
   };
 
@@ -284,8 +349,29 @@ const Profile = () => {
             className="flex flex-col items-center md:flex-row md:items-start md:gap-8"
           >
             <div className="flex flex-col items-center md:items-start">
-              <div className="w-24 h-24 rounded-full bg-card border-4 border-background shadow-xl flex items-center justify-center mb-4">
-                <User className="w-12 h-12 text-muted-foreground" />
+              {/* Avatar with upload */}
+              <div className="relative mb-4">
+                <div className="w-24 h-24 rounded-full bg-card border-4 border-background shadow-xl flex items-center justify-center overflow-hidden">
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    <User className="w-12 h-12 text-muted-foreground" />
+                  )}
+                </div>
+                <label className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center cursor-pointer shadow-md hover:bg-primary/90 transition-colors">
+                  {uploadingAvatar ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Camera className="w-4 h-4" />
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleAvatarUpload}
+                    disabled={uploadingAvatar}
+                  />
+                </label>
               </div>
               
               {/* Editable display name */}
