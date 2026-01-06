@@ -55,6 +55,8 @@ interface WalkerInvite {
   owner_user_id: string;
   status: string;
   dog_name: string | null;
+  owner_name: string | null;
+  owner_avatar: string | null;
 }
 
 const MyDogs = () => {
@@ -140,6 +142,8 @@ const MyDogs = () => {
           owner_user_id: inv.owner_user_id,
           status: inv.status,
           dog_name: inv.dog_name,
+          owner_name: inv.owner_name,
+          owner_avatar: inv.owner_avatar,
         })));
       }
     } catch (error: any) {
@@ -197,6 +201,16 @@ const MyDogs = () => {
     setIsSaving(true);
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      // Get owner's profile for email notification
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", user.id)
+        .single();
+
       // Use secure RPC function to invite walker (handles upsert server-side)
       const { error } = await supabase.rpc("invite_dog_walker", {
         p_dog_id: selectedDog.id,
@@ -207,6 +221,16 @@ const MyDogs = () => {
         console.error("Invite error:", error.message);
         throw new Error("Unable to send invite. Please try again.");
       }
+
+      // Send email notification (fire and forget)
+      supabase.functions.invoke("send-invite-email", {
+        body: {
+          type: "invite_sent",
+          recipientEmail: walkerEmail.toLowerCase(),
+          dogName: selectedDog.name,
+          ownerName: profile?.full_name || user.email?.split("@")[0],
+        },
+      }).catch(console.error);
 
       // Always show generic success message to prevent enumeration
       toast({
@@ -271,12 +295,33 @@ const MyDogs = () => {
 
   const handleAcceptInvite = async (invite: WalkerInvite) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      // Get walker's profile for email notification
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", user.id)
+        .single();
+
       // Use secure RPC function to accept invite
       const { error } = await supabase.rpc("accept_dog_walker_invite", {
         p_invite_id: invite.id,
       });
 
       if (error) throw error;
+
+      // Send email notification to owner (fire and forget)
+      supabase.functions.invoke("send-invite-email", {
+        body: {
+          type: "invite_accepted",
+          recipientEmail: "", // We'll need to fetch owner email via RPC
+          recipientName: invite.owner_name,
+          dogName: invite.dog_name,
+          walkerName: profile?.full_name || user.email?.split("@")[0],
+        },
+      }).catch(console.error);
 
       toast({
         title: "Invite accepted! 🎉",
@@ -299,12 +344,32 @@ const MyDogs = () => {
 
   const handleDeclineInvite = async (invite: WalkerInvite) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Get walker's profile for email notification
+      const { data: profile } = user ? await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", user.id)
+        .single() : { data: null };
+
       // Use secure RPC function to decline invite
       const { error } = await supabase.rpc("decline_dog_walker_invite", {
         p_invite_id: invite.id,
       });
 
       if (error) throw error;
+
+      // Send email notification to owner (fire and forget)
+      supabase.functions.invoke("send-invite-email", {
+        body: {
+          type: "invite_declined",
+          recipientEmail: "", // Owner email fetched server-side
+          recipientName: invite.owner_name,
+          dogName: invite.dog_name,
+          walkerName: profile?.full_name || user?.email?.split("@")[0],
+        },
+      }).catch(console.error);
 
       toast({
         title: "Invite declined",
@@ -387,9 +452,27 @@ const MyDogs = () => {
                   animate={{ opacity: 1, y: 0 }}
                   className="bg-card rounded-xl border border-border p-4"
                 >
-                  <p className="font-medium mb-2">
-                    You've been invited to walk {invite.dog_name || "a dog"}
-                  </p>
+                  <div className="flex items-start gap-3 mb-3">
+                    {invite.owner_avatar ? (
+                      <img 
+                        src={invite.owner_avatar} 
+                        alt={invite.owner_name || "Owner"} 
+                        className="w-10 h-10 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-lg">
+                        👤
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium">
+                        Walk {invite.dog_name || "a dog"}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Invited by {invite.owner_name || "someone"}
+                      </p>
+                    </div>
+                  </div>
                   <div className="flex gap-2">
                     <Button
                       size="sm"

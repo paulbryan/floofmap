@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { Home, Play, MapPin, User, Dog } from "lucide-react";
 import { motion } from "framer-motion";
+import { usePendingInviteCount } from "@/hooks/usePendingInviteCount";
 
 const navItems = [
   { icon: Home, label: "Home", path: "/app" },
@@ -12,6 +13,7 @@ const navItems = [
 
 const DesktopSidebar = () => {
   const location = useLocation();
+  const pendingInviteCount = usePendingInviteCount();
 
   return (
     <aside className="hidden lg:flex flex-col w-64 bg-card border-r border-border h-screen sticky top-0">
@@ -35,6 +37,7 @@ const DesktopSidebar = () => {
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           const isRecordButton = item.label === "Record Walk";
+          const isDogsButton = item.label === "My Dogs";
 
           if (isRecordButton) {
             return (
@@ -65,8 +68,20 @@ const DesktopSidebar = () => {
                   className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-r-full"
                 />
               )}
-              <item.icon className="w-5 h-5" />
-              <span>{item.label}</span>
+              <div className="relative">
+                <item.icon className="w-5 h-5" />
+                {isDogsButton && pendingInviteCount > 0 && (
+                  <span className="absolute -top-1 -right-2 min-w-[18px] h-[18px] bg-blue-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1">
+                    {pendingInviteCount}
+                  </span>
+                )}
+              </div>
+              <span className="flex-1">{item.label}</span>
+              {isDogsButton && pendingInviteCount > 0 && (
+                <span className="text-xs text-blue-500 font-medium">
+                  {pendingInviteCount} new
+                </span>
+              )}
             </Link>
           );
         })}
