@@ -14,3 +14,6 @@ verify_jwt = true
 
 [functions.get-weather]
 verify_jwt = false
+
+[functions.send-invite-email]
+verify_jwt = true

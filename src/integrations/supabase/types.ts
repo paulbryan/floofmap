@@ -350,6 +350,8 @@ export type Database = {
           dog_id: string
           dog_name: string
           id: string
+          owner_avatar: string
+          owner_name: string
           owner_user_id: string
           status: string
         }[]

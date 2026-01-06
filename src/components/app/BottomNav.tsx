@@ -1,18 +1,20 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Play, MapPin, User, Menu, X } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Home, Play, MapPin, User, Dog } from "lucide-react";
+import { motion } from "framer-motion";
+import { usePendingInviteCount } from "@/hooks/usePendingInviteCount";
 
 const navItems = [
   { icon: Home, label: "Home", path: "/app" },
   { icon: Play, label: "Record", path: "/app/record" },
-  { icon: MapPin, label: "Explore", path: "/app/explore" },
+  { icon: Dog, label: "Dogs", path: "/app/dogs" },
   { icon: User, label: "Profile", path: "/app/profile" },
 ];
 
 const BottomNav = () => {
   const location = useLocation();
   const [isRecording, setIsRecording] = useState(false);
+  const pendingInviteCount = usePendingInviteCount();
 
   // Check if we're on the recording page
   useEffect(() => {
@@ -25,6 +27,7 @@ const BottomNav = () => {
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           const isRecordButton = item.label === "Record";
+          const isDogsButton = item.label === "Dogs";
 
           return (
             <Link
@@ -46,7 +49,14 @@ const BottomNav = () => {
                 </div>
               ) : (
                 <>
-                  <item.icon className="w-6 h-6" />
+                  <div className="relative">
+                    <item.icon className="w-6 h-6" />
+                    {isDogsButton && pendingInviteCount > 0 && (
+                      <span className="absolute -top-1 -right-2 min-w-[18px] h-[18px] bg-blue-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1">
+                        {pendingInviteCount}
+                      </span>
+                    )}
+                  </div>
                   <span className="text-xs mt-1 font-medium">{item.label}</span>
                   {isActive && (
                     <motion.div
