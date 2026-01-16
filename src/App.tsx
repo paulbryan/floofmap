@@ -12,6 +12,7 @@ import Demo from "./pages/Demo";
 import Pricing from "./pages/Pricing";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
+import Health from "./pages/Health";
 import NotFound from "./pages/NotFound";
 
 // App pages
@@ -40,7 +41,7 @@ const App = () => (
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
-          
+          <Route path="/health" element={<Health />} />
           {/* Protected app routes */}
           <Route path="/app" element={<AppLayout />}>
             <Route index element={<AppHome />} />
