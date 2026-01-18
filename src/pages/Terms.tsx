@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowLeft, FileText, AlertTriangle, MapPin } from "lucide-react";
 import { motion } from "framer-motion";
+import SEO from "@/components/SEO";
 
 const Terms = () => {
   const currentDate = new Date().toLocaleDateString("en-US", {
@@ -11,6 +12,11 @@ const Terms = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Terms of Service"
+        description="Read Floof Map's Terms of Service. Learn about acceptable use, community guidelines, data ownership, and your rights as a user."
+        path="/terms"
+      />
       {/* Header */}
       <div className="bg-card border-b border-border sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">

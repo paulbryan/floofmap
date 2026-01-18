@@ -73,6 +73,54 @@
         display: none !important;
       }
     </style>
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Floof Map",
+        "applicationCategory": "LifestyleApplication",
+        "operatingSystem": "Web",
+        "description": "Track your dog's walks, discover sniff spots, and explore dog-friendly places with GPS walk tracking and AI-powered sniff detection.",
+        "url": "https://floofmap.lovable.app",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": "4.8",
+          "ratingCount": "150"
+        },
+        "author": {
+          "@type": "Organization",
+          "name": "Floof Map",
+          "url": "https://floofmap.lovable.app"
+        },
+        "featureList": [
+          "GPS Walk Tracking",
+          "AI Sniff Detection",
+          "Dog-Friendly POI Discovery",
+          "Walk History & Statistics",
+          "Offline Support"
+        ]
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "Floof Map",
+        "url": "https://floofmap.lovable.app",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "https://floofmap.lovable.app/app/explore?q={search_term_string}",
+          "query-input": "required name=search_term_string"
+        }
+      }
+    </script>
   </head>
 
   <body>

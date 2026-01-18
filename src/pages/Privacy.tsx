@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowLeft, Shield, Lock, Eye, Trash2, Download, MapPin } from "lucide-react";
 import { motion } from "framer-motion";
+import SEO from "@/components/SEO";
 
 const Privacy = () => {
   const currentDate = new Date().toLocaleDateString("en-US", {
@@ -11,6 +12,11 @@ const Privacy = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Privacy Policy"
+        description="Learn how Floof Map protects your privacy. We use GPS blurring for community pins, never sell your data, and give you full control over your walk history."
+        path="/privacy"
+      />
       {/* Header */}
       <div className="bg-card border-b border-border sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
