@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import SEO from "@/components/SEO";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -108,6 +109,12 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen bg-gradient-sunset flex items-center justify-center p-4">
+      <SEO
+        title={isSignUp ? "Sign Up" : "Sign In"}
+        description={isSignUp ? "Create your free Floof Map account and start tracking your dog's adventures today." : "Sign in to your Floof Map account to continue tracking walks."}
+        path="/auth"
+        noIndex
+      />
       {/* Background decoration */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl" />

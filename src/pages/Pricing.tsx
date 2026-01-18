@@ -4,6 +4,7 @@ import { Check, MapPin, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/landing/Header";
 import Footer from "@/components/landing/Footer";
+import SEO from "@/components/SEO";
 
 const plans = [
   {
@@ -47,6 +48,11 @@ const plans = [
 const Pricing = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Pricing"
+        description="Choose your Floof Map plan. Start free forever or upgrade to Pro for unlimited walk recordings, AI sniff detection, and advanced analytics."
+        path="/pricing"
+      />
       <Header />
       
       <main className="pt-32 pb-20">

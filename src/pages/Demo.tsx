@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Play, MapPin, Timer, Route, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import SEO from "@/components/SEO";
 
 // Demo walk data
 const demoWalk = {
@@ -40,6 +41,11 @@ const demoWalk = {
 const Demo = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Demo Walk"
+        description="See how Floof Map tracks your dog's walks with GPS, detects sniff stops with AI, and shows nearby dog-friendly POIs. Try the interactive demo!"
+        path="/demo"
+      />
       {/* Header */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-card/95 backdrop-blur border-b border-border">
         <div className="container mx-auto px-4 py-4">
