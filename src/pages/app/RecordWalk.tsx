@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Square, Pause, MapPin, Timer, Route, Activity, AlertTriangle, Navigation, Loader2, Dog, PlusCircle, ChevronDown, Check, MapPinned } from "lucide-react";
+import { Play, Square, Pause, MapPin, Timer, Route, Activity, AlertTriangle, Navigation, Loader2, Dog, PlusCircle, ChevronDown, Check, MapPinned, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import MapContainer from "@/components/map/MapContainer";
 import { useMapRoute } from "@/hooks/useMapRoute";
+import { useWakeLock } from "@/hooks/useWakeLock";
 import maplibregl from "maplibre-gl";
 import { supabase } from "@/integrations/supabase/client";
 import { Link, useNavigate } from "react-router-dom";
@@ -51,6 +52,10 @@ const RecordWalk = () => {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const { setMap, addPoint, updateCurrentPosition, clearRoute } = useMapRoute();
+  const wakeLock = useWakeLock();
+
+  // Track visibility changes to warn user
+  const [showBackgroundWarning, setShowBackgroundWarning] = useState(false);
 
   // Calculate distance between two points using Haversine formula
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
@@ -323,7 +328,17 @@ const RecordWalk = () => {
   };
 
   // Start recording
-  const handleStart = () => {
+  const handleStart = async () => {
+    // Request wake lock to prevent screen from sleeping
+    const wakeLockAcquired = await wakeLock.request();
+    if (!wakeLockAcquired) {
+      toast({
+        title: "Screen may sleep",
+        description: "Keep the app visible to ensure GPS tracking continues.",
+        variant: "destructive",
+      });
+    }
+
     setIsRecording(true);
     setIsPaused(false);
     setElapsedTime(0);
@@ -338,7 +353,9 @@ const RecordWalk = () => {
 
     toast({
       title: "Recording Started! 🐾",
-      description: "GPS tracking is now active. Enjoy your walk!",
+      description: wakeLockAcquired 
+        ? "GPS tracking is active. Screen will stay on during your walk."
+        : "GPS tracking is now active. Keep the app visible!",
     });
   };
 
@@ -364,6 +381,9 @@ const RecordWalk = () => {
     setIsRecording(false);
     setIsPaused(false);
     stopTracking();
+    
+    // Release wake lock
+    wakeLock.release();
     
     if (timerRef.current) {
       clearInterval(timerRef.current);
@@ -461,11 +481,28 @@ const RecordWalk = () => {
   useEffect(() => {
     return () => {
       stopTracking();
+      wakeLock.release();
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
     };
-  }, [stopTracking]);
+  }, [stopTracking, wakeLock]);
+
+  // Handle visibility changes - warn user if they switch away during recording
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden" && isRecording && !isPaused) {
+        setShowBackgroundWarning(true);
+      } else if (document.visibilityState === "visible") {
+        setShowBackgroundWarning(false);
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [isRecording, isPaused]);
 
   // Calculate current pace
   const pace = elapsedTime > 0 && distance > 0
@@ -533,12 +570,38 @@ const RecordWalk = () => {
                     <span className="font-semibold text-sm">
                       {isPaused ? "Paused" : "Recording"}
                     </span>
+                    {wakeLock.isActive && (
+                      <span className="text-xs text-green-600 flex items-center gap-1">
+                        <Smartphone className="w-3 h-3" />
+                        Screen on
+                      </span>
+                    )}
                   </div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <span>{trackPoints.length} pts</span>
                     {currentPosition && (
                       <span>±{Math.round(currentPosition.coords.accuracy)}m</span>
                     )}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Background warning toast */}
+          <AnimatePresence>
+            {showBackgroundWarning && (
+              <motion.div
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 50 }}
+                className="absolute bottom-20 left-4 right-4 md:left-auto md:right-4 md:max-w-sm bg-amber-500 text-white rounded-xl shadow-xl p-4 z-30"
+              >
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-sm">Keep app visible!</p>
+                    <p className="text-xs opacity-90">GPS tracking may stop if you switch apps or lock your screen.</p>
                   </div>
                 </div>
               </motion.div>
@@ -732,10 +795,22 @@ const RecordWalk = () => {
               )}
             </div>
 
-            {/* iOS warning */}
-            <p className="text-xs text-center text-muted-foreground mt-4">
-              📱 For best results on iOS, keep the app open during your walk.
-            </p>
+            {/* Screen status info */}
+            {isRecording && wakeLock.isActive && (
+              <p className="text-xs text-center text-green-600 mt-4">
+                ✓ Screen will stay on during your walk
+              </p>
+            )}
+            {isRecording && !wakeLock.isActive && (
+              <p className="text-xs text-center text-amber-600 mt-4">
+                ⚠️ Keep the app visible - screen may turn off
+              </p>
+            )}
+            {!isRecording && (
+              <p className="text-xs text-center text-muted-foreground mt-4">
+                📱 Screen will stay on during your walk to ensure GPS tracking works.
+              </p>
+            )}
           </div>
         </motion.div>
       </div>
