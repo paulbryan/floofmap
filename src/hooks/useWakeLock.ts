@@ -157,17 +157,5 @@ export function useWakeLock() {
   };
 }
 
-// Type augmentation for Wake Lock API
-declare global {
-  interface Navigator {
-    wakeLock?: {
-      request(type: "screen"): Promise<WakeLockSentinel>;
-    };
-  }
-
-  interface WakeLockSentinel extends EventTarget {
-    readonly released: boolean;
-    readonly type: "screen";
-    release(): Promise<void>;
-  }
-}
+// Wake Lock API types are now part of TypeScript's lib.dom.d.ts
+// No custom type augmentation needed
