@@ -117,6 +117,66 @@ This will apply all SQL migration scripts in the `supabase/migrations/` director
 
 Deploy via [Lovable](https://lovable.dev/projects/floofmap): open the project and click Share → Publish.
 
+## Native Mobile App (iOS/Android)
+
+FloofMap can be built as a native mobile app using [Capacitor](https://capacitorjs.com/), enabling true background GPS tracking when the screen is off.
+
+### Prerequisites
+
+- **iOS**: Mac with Xcode installed
+- **Android**: Android Studio installed
+
+### Setup (one-time)
+
+```bash
+# 1. Clone the repo and install dependencies
+git clone https://github.com/paulbryan/floofmap
+cd floofmap
+npm install
+
+# 2. Add native platforms
+npx cap add ios
+npx cap add android
+```
+
+### Build & Run
+
+```bash
+# Build the web app
+npm run build
+
+# Sync web assets to native platforms
+npx cap sync
+
+# Run on device or emulator
+npx cap run ios      # Opens in Xcode
+npx cap run android  # Opens in Android Studio
+```
+
+### Enable Background Location
+
+For GPS tracking to work when the screen is off:
+
+**iOS:**
+1. Open the project in Xcode: `npx cap open ios`
+2. Select your target → Signing & Capabilities
+3. Click "+ Capability" → add "Background Modes"
+4. Enable "Location updates"
+
+**Android:**
+The `@capacitor/geolocation` plugin automatically requests `ACCESS_BACKGROUND_LOCATION` on Android 10+. Users will be prompted to allow "all the time" location access.
+
+### Development with Hot Reload
+
+The `capacitor.config.ts` is pre-configured to load from the Lovable preview URL during development. To switch to local development:
+
+1. Comment out the `server.url` in `capacitor.config.ts`
+2. Run `npm run build && npx cap sync` after each change
+
+### Production Build
+
+For production, remove or comment out the `server` block in `capacitor.config.ts` so the app loads from the bundled `dist/` folder.
+
 ## Custom Domains
 
 To connect a custom domain, go to Project → Settings → Domains in Lovable and click Connect Domain.
