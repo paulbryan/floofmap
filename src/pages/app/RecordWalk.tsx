@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Square, Pause, MapPin, Timer, Route, Activity, AlertTriangle, Navigation, Loader2, Dog, PlusCircle, ChevronDown, Check, MapPinned, Smartphone } from "lucide-react";
+import { Play, Square, Pause, MapPin, Timer, Route, Activity, AlertTriangle, Navigation, Loader2, Dog, PlusCircle, ChevronDown, Check, MapPinned, Smartphone, HelpCircle } from "lucide-react";
+import LocationPermissionGuide from "@/components/app/LocationPermissionGuide";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import MapContainer from "@/components/map/MapContainer";
@@ -608,7 +609,7 @@ const RecordWalk = () => {
             )}
           </AnimatePresence>
 
-          {/* Permission warning */}
+            {/* Permission warning */}
           {permissionStatus === "denied" && (
             <motion.div
               initial={{ opacity: 0 }}
@@ -621,9 +622,12 @@ const RecordWalk = () => {
                 <p className="text-sm text-muted-foreground mb-4">
                   FloofMap needs location access to record your walks. Please enable it in your browser settings.
                 </p>
-                <Button onClick={() => window.location.reload()}>
-                  Try Again
-                </Button>
+                <div className="flex flex-col gap-2">
+                  <Button onClick={() => window.location.reload()}>
+                    Try Again
+                  </Button>
+                  <LocationPermissionGuide />
+                </div>
               </div>
             </motion.div>
           )}
@@ -636,6 +640,10 @@ const RecordWalk = () => {
           className="bg-card border-t md:border-t-0 md:border-l border-border rounded-t-3xl md:rounded-none -mt-6 md:mt-0 relative z-10 shadow-xl md:shadow-none md:w-80 lg:w-96 md:flex md:flex-col md:justify-center"
         >
           <div className="p-6 md:p-8">
+            {/* Location help link */}
+            <div className="flex justify-end mb-2 -mt-2">
+              <LocationPermissionGuide />
+            </div>
             {/* Main stats */}
             <div className="grid grid-cols-3 gap-4 mb-6 md:mb-8">
               <div className="text-center">
