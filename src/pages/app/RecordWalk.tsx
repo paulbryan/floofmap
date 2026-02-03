@@ -45,7 +45,7 @@ const RecordWalk = () => {
   const [distance, setDistance] = useState(0);
   const [mapCenter, setMapCenter] = useState<[number, number] | null>(null);
   const [dogs, setDogs] = useState<DogOption[]>([]);
-  const [selectedDog, setSelectedDog] = useState<DogOption | null>(null);
+  const [selectedDogs, setSelectedDogs] = useState<DogOption[]>([]);
   const [loadingDogs, setLoadingDogs] = useState(true);
   const [showLocationUpdate, setShowLocationUpdate] = useState(false);
   const usedCachedRef = useRef(false);
@@ -191,7 +191,7 @@ const RecordWalk = () => {
       setDogs(allDogs);
       // Auto-select first dog if only one
       if (allDogs.length === 1) {
-        setSelectedDog(allDogs[0]);
+        setSelectedDogs([allDogs[0]]);
       }
       setLoadingDogs(false);
     };
@@ -416,12 +416,13 @@ const RecordWalk = () => {
         return;
       }
 
-      // Create walk record
+      // Create walk record (use first dog for backward compat, or null)
+      const primaryDogId = selectedDogs.length > 0 ? selectedDogs[0].id : null;
       const { data: walk, error: walkError } = await supabase
         .from("walks")
         .insert({
           user_id: user.id,
-          dog_id: selectedDog?.id || null,
+          dog_id: primaryDogId,
           started_at: new Date(trackPoints[0].timestamp).toISOString(),
           ended_at: new Date(trackPoints[trackPoints.length - 1].timestamp).toISOString(),
           distance_m: Math.round(distance),
@@ -431,6 +432,18 @@ const RecordWalk = () => {
         .single();
 
       if (walkError) throw walkError;
+
+      // Insert walk_dogs for all selected dogs
+      if (selectedDogs.length > 0) {
+        const walkDogsToInsert = selectedDogs.map(dog => ({
+          walk_id: walk.id,
+          dog_id: dog.id,
+        }));
+        const { error: walkDogsError } = await supabase
+          .from("walk_dogs")
+          .insert(walkDogsToInsert);
+        if (walkDogsError) throw walkDogsError;
+      }
 
       // Insert track points
       const pointsToInsert = trackPoints.map(p => ({
@@ -698,53 +711,79 @@ const RecordWalk = () => {
                   </div>
                 ) : (
                   <div className="w-full max-w-xs space-y-3">
-                    {/* Dog selector */}
+                    {/* Multi-dog selector */}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="outline" className="w-full justify-between">
                           <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-full bg-amber-500/20 flex items-center justify-center text-sm">
-                              {selectedDog?.avatar_url ? (
-                                <img src={selectedDog.avatar_url} alt="" className="w-6 h-6 rounded-full object-cover" />
-                              ) : (
-                                "🐕"
-                              )}
-                            </div>
+                            {selectedDogs.length > 0 ? (
+                              <div className="flex -space-x-2">
+                                {selectedDogs.slice(0, 3).map((dog) => (
+                                  <div key={dog.id} className="w-6 h-6 rounded-full bg-amber-500/20 flex items-center justify-center text-sm border-2 border-background">
+                                    {dog.avatar_url ? (
+                                      <img src={dog.avatar_url} alt="" className="w-6 h-6 rounded-full object-cover" />
+                                    ) : (
+                                      "🐕"
+                                    )}
+                                  </div>
+                                ))}
+                                {selectedDogs.length > 3 && (
+                                  <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs border-2 border-background">
+                                    +{selectedDogs.length - 3}
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="w-6 h-6 rounded-full bg-amber-500/20 flex items-center justify-center text-sm">
+                                🐕
+                              </div>
+                            )}
                             <span>
-                              {selectedDog ? selectedDog.name : "Select a dog"}
-                              {selectedDog?.isShared && (
-                                <span className="text-xs text-muted-foreground ml-1">(shared)</span>
-                              )}
+                              {selectedDogs.length === 0
+                                ? "Select dogs"
+                                : selectedDogs.length === 1
+                                ? selectedDogs[0].name
+                                : `${selectedDogs.length} dogs selected`}
                             </span>
                           </div>
                           <ChevronDown className="w-4 h-4 text-muted-foreground" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="center" className="w-56">
-                        {dogs.map((dog) => (
-                          <DropdownMenuItem
-                            key={dog.id}
-                            onClick={() => setSelectedDog(dog)}
-                            className="flex items-center justify-between"
-                          >
-                            <div className="flex items-center gap-2">
-                              <div className="w-6 h-6 rounded-full bg-amber-500/20 flex items-center justify-center text-sm">
-                                {dog.avatar_url ? (
-                                  <img src={dog.avatar_url} alt="" className="w-6 h-6 rounded-full object-cover" />
-                                ) : (
-                                  "🐕"
+                        {dogs.map((dog) => {
+                          const isSelected = selectedDogs.some(d => d.id === dog.id);
+                          return (
+                            <DropdownMenuItem
+                              key={dog.id}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                if (isSelected) {
+                                  setSelectedDogs(selectedDogs.filter(d => d.id !== dog.id));
+                                } else {
+                                  setSelectedDogs([...selectedDogs, dog]);
+                                }
+                              }}
+                              className="flex items-center justify-between"
+                            >
+                              <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 rounded-full bg-amber-500/20 flex items-center justify-center text-sm">
+                                  {dog.avatar_url ? (
+                                    <img src={dog.avatar_url} alt="" className="w-6 h-6 rounded-full object-cover" />
+                                  ) : (
+                                    "🐕"
+                                  )}
+                                </div>
+                                <span>{dog.name}</span>
+                                {dog.isShared && (
+                                  <span className="text-xs text-muted-foreground">(shared)</span>
                                 )}
                               </div>
-                              <span>{dog.name}</span>
-                              {dog.isShared && (
-                                <span className="text-xs text-muted-foreground">(shared)</span>
+                              {isSelected && (
+                                <Check className="w-4 h-4 text-primary" />
                               )}
-                            </div>
-                            {selectedDog?.id === dog.id && (
-                              <Check className="w-4 h-4 text-primary" />
-                            )}
-                          </DropdownMenuItem>
-                        ))}
+                            </DropdownMenuItem>
+                          );
+                        })}
                       </DropdownMenuContent>
                     </DropdownMenu>
 
@@ -753,7 +792,7 @@ const RecordWalk = () => {
                       variant="hero"
                       size="xl"
                       className="w-full"
-                      disabled={!selectedDog}
+                      disabled={selectedDogs.length === 0}
                     >
                       <Play className="w-6 h-6" />
                       Start Walk
