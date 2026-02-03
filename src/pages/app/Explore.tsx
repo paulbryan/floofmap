@@ -23,6 +23,14 @@ interface Walk {
   } | null;
 }
 
+interface WalkWithDogs extends Walk {
+  walkDogs: Array<{
+    id: string;
+    name: string;
+    avatar_url: string | null;
+  }>;
+}
+
 interface TrackPoint {
   lat: number;
   lon: number;
@@ -36,7 +44,7 @@ const Explore = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedWalk, setSelectedWalk] = useState<string | null>(null);
   const [mapCenter, setMapCenter] = useState<[number, number] | null>(null);
-  const [walks, setWalks] = useState<Walk[]>([]);
+  const [walks, setWalks] = useState<WalkWithDogs[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingRoute, setLoadingRoute] = useState(false);
   const [stopCounts, setStopCounts] = useState<Record<string, number>>({});
@@ -104,10 +112,35 @@ const Explore = () => {
         .limit(50);
 
       if (walksData) {
-        setWalks(walksData);
-
-        // Fetch stop counts for each walk
+        // Fetch walk_dogs for all walks to show multiple dogs
         const walkIds = walksData.map(w => w.id);
+        const { data: walkDogsData } = await supabase
+          .from("walk_dogs")
+          .select("walk_id, dogs(id, name, avatar_url)")
+          .in("walk_id", walkIds);
+
+        // Group walk_dogs by walk_id
+        const walkDogsMap: Record<string, Array<{ id: string; name: string; avatar_url: string | null }>> = {};
+        if (walkDogsData) {
+          walkDogsData.forEach((wd) => {
+            const dog = wd.dogs as unknown as { id: string; name: string; avatar_url: string | null } | null;
+            if (dog) {
+              if (!walkDogsMap[wd.walk_id]) {
+                walkDogsMap[wd.walk_id] = [];
+              }
+              walkDogsMap[wd.walk_id].push(dog);
+            }
+          });
+        }
+
+        // Merge walkDogs into walks, falling back to legacy single dog
+        const walksWithDogs: WalkWithDogs[] = walksData.map(walk => ({
+          ...walk,
+          walkDogs: walkDogsMap[walk.id] || (walk.dogs ? [walk.dogs] : []),
+        }));
+        setWalks(walksWithDogs);
+
+        // Fetch stop counts for each walk (reuse walkIds from above)
         if (walkIds.length > 0) {
           const { data: stopsData } = await supabase
             .from("stop_events")
@@ -346,12 +379,24 @@ const Explore = () => {
                   whileTap={{ scale: 0.98 }}
                 >
                   <div className="flex items-center gap-3 mb-2">
-                    {walk.dogs ? (
-                      <div className="w-8 h-8 rounded-full bg-amber-500/10 flex items-center justify-center overflow-hidden shrink-0">
-                        {walk.dogs.avatar_url ? (
-                          <img src={walk.dogs.avatar_url} alt={walk.dogs.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <span className="text-sm">🐕</span>
+                    {walk.walkDogs.length > 0 ? (
+                      <div className="flex -space-x-1 shrink-0">
+                        {walk.walkDogs.slice(0, 2).map((dog) => (
+                          <div
+                            key={dog.id}
+                            className="w-8 h-8 rounded-full bg-amber-500/10 flex items-center justify-center overflow-hidden border-2 border-background"
+                          >
+                            {dog.avatar_url ? (
+                              <img src={dog.avatar_url} alt={dog.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <span className="text-sm">🐕</span>
+                            )}
+                          </div>
+                        ))}
+                        {walk.walkDogs.length > 2 && (
+                          <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium border-2 border-background">
+                            +{walk.walkDogs.length - 2}
+                          </div>
                         )}
                       </div>
                     ) : (
@@ -368,8 +413,12 @@ const Explore = () => {
                           {stopCounts[walk.id] || 0} sniffs
                         </span>
                       </div>
-                      {walk.dogs && (
-                        <span className="text-xs text-muted-foreground">{walk.dogs.name}</span>
+                      {walk.walkDogs.length > 0 && (
+                        <span className="text-xs text-muted-foreground">
+                          {walk.walkDogs.length === 1
+                            ? walk.walkDogs[0].name
+                            : walk.walkDogs.map(d => d.name).join(", ")}
+                        </span>
                       )}
                     </div>
                   </div>

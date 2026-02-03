@@ -72,6 +72,12 @@ interface Walk {
   } | null;
 }
 
+interface WalkDog {
+  id: string;
+  name: string;
+  avatar_url: string | null;
+}
+
 const WalkDetail = () => {
   const { walkId } = useParams();
   const navigate = useNavigate();
@@ -81,6 +87,7 @@ const WalkDetail = () => {
   const animationRef = useRef<number | null>(null);
 
   const [walk, setWalk] = useState<Walk | null>(null);
+  const [walkDogs, setWalkDogs] = useState<WalkDog[]>([]);
   const [trackPoints, setTrackPoints] = useState<TrackPoint[]>([]);
   const [stopEvents, setStopEvents] = useState<StopEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -94,6 +101,7 @@ const WalkDetail = () => {
       if (!walkId) return;
 
       try {
+        // Fetch walk and legacy dog (for backward compat)
         const { data: walkData, error: walkError } = await supabase
           .from("walks")
           .select("*, dogs(id, name, avatar_url)")
@@ -106,6 +114,22 @@ const WalkDetail = () => {
           return;
         }
         setWalk(walkData);
+
+        // Fetch dogs from walk_dogs junction table
+        const { data: walkDogsData, error: walkDogsError } = await supabase
+          .from("walk_dogs")
+          .select("dog_id, dogs(id, name, avatar_url)")
+          .eq("walk_id", walkId);
+
+        if (!walkDogsError && walkDogsData) {
+          const dogs = walkDogsData
+            .map(wd => wd.dogs as unknown as WalkDog)
+            .filter(Boolean);
+          setWalkDogs(dogs);
+        } else if (walkData.dogs) {
+          // Fallback to legacy single dog
+          setWalkDogs([walkData.dogs]);
+        }
 
         // Use secure RPC function that blurs start/end coordinates for walkers
         const { data: pointsData, error: pointsError } = await supabase
@@ -502,21 +526,37 @@ ${trackPoints.map(p => `      <trkpt lat="${p.lat}" lon="${p.lon}">
               </p>
             </div>
             <div className="flex items-center gap-3">
-              {walk.dogs ? (
-                <div className="w-14 h-14 rounded-xl bg-amber-100 flex items-center justify-center overflow-hidden">
-                  {walk.dogs.avatar_url ? (
-                    <img src={walk.dogs.avatar_url} alt={walk.dogs.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-2xl">🐕</span>
-                  )}
-                </div>
+              {walkDogs.length > 0 ? (
+                <>
+                  <div className="flex -space-x-2">
+                    {walkDogs.slice(0, 3).map((dog) => (
+                      <div
+                        key={dog.id}
+                        className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center overflow-hidden border-2 border-background"
+                      >
+                        {dog.avatar_url ? (
+                          <img src={dog.avatar_url} alt={dog.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-xl">🐕</span>
+                        )}
+                      </div>
+                    ))}
+                    {walkDogs.length > 3 && (
+                      <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center text-sm font-medium border-2 border-background">
+                        +{walkDogs.length - 3}
+                      </div>
+                    )}
+                  </div>
+                  <p className="font-medium text-sm">
+                    {walkDogs.length === 1
+                      ? walkDogs[0].name
+                      : `${walkDogs.map(d => d.name).join(", ")}`}
+                  </p>
+                </>
               ) : (
                 <div className="w-14 h-14 rounded-xl bg-muted flex items-center justify-center text-2xl">
                   🐕
                 </div>
-              )}
-              {walk.dogs && (
-                <p className="font-medium text-sm">{walk.dogs.name}</p>
               )}
             </div>
           </div>
