@@ -1,7 +1,8 @@
 {
-  "name": "mobile",
+  "name": "floofmap-mobile",
   "version": "1.0.0",
   "main": "index.ts",
+  "description": "FloofMap mobile app with background GPS tracking for dog walks",
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
