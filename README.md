@@ -4,7 +4,16 @@
 
 [Floofmap](https://floofmap.com) was created during the [LovHack 2026](https://lovhack.dev/) online hackathon—a 48-hour event focused on building real web apps fast. As an official participant, this project was designed, built, and shipped in under two days as part of the [LovHack](https://lovhack.dev/) challenge.
 
-[Floofmap](https://floofmap.com) is a modern web application for dog walkers and pet lovers, built with Vite, React, TypeScript, Tailwind CSS, and [Supabase](https://supabase.com/).
+[Floofmap](https://floofmap.com) is a modern dog walking tracking application with both web and mobile support, built with React (web) and React Native with Expo (mobile), TypeScript, and [Supabase](https://supabase.com/).
+
+## Project Structure
+
+This repository contains two applications:
+
+- **web/** - React web application built with Vite
+- **mobile/** - React Native mobile application built with Expo
+
+The mobile app includes **background GPS tracking** that works even when the app is not in the foreground or the screen is locked.
 
 ## Project info
 
@@ -22,21 +31,24 @@ Visit the [Floofmap Project on Lovable](https://lovable.dev/projects/floofmap) t
 
 **Use your preferred IDE**
 
-If you want to work locally using your own IDE, clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+If you want to work locally using your own IDE, clone this repo and push changes.
 
 **Requirements:**
 
 - Node.js & npm ([install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating))
 
-Follow these steps:
+## Getting Started
+
+### Web Application
+
+Follow these steps to run the web application:
 
 ```sh
-
 # Step 1: Clone the repository
-git clone `https://github.com/paulbryan/floofmap`
+git clone https://github.com/paulbryan/floofmap
 
-# Step 2: Navigate to the project directory
-cd floofmap
+# Step 2: Navigate to the web directory
+cd floofmap/web
 
 # Step 3: Install dependencies
 npm install
@@ -44,6 +56,31 @@ npm install
 # Step 4: Start the development server
 npm run dev
 ```
+
+### Mobile Application (React Native with Expo)
+
+The mobile app supports **background GPS tracking** for recording walks even when the app is not in the foreground.
+
+Follow these steps to run the mobile application:
+
+```sh
+# Step 1: Navigate to the mobile directory
+cd floofmap/mobile
+
+# Step 2: Install dependencies
+npm install
+
+# Step 3: Start the Expo development server
+npm start
+
+# Then scan the QR code with the Expo Go app on your device
+# Or press 'a' for Android emulator or 'i' for iOS simulator
+```
+
+**Important:** To test background location tracking, you need to:
+1. Build a development build (not Expo Go): `npx expo run:android` or `npx expo run:ios`
+2. Grant location permissions when prompted
+3. Allow "Always" location access for background tracking
 
 **Edit a file directly in GitHub**
 
@@ -75,11 +112,18 @@ You will need to add the following secrets to your Supabase project:
 
 1. In your Supabase project dashboard, go to **Project Settings > API**.
 2. Copy your **Project URL** and **anon/public API key**.
-3. Create a `.env` file in the root of this repo and add:
+3. Create environment files:
 
+   **For web application** - Create `web/.env`:
    ```env
    VITE_SUPABASE_URL=your-project-url
    VITE_SUPABASE_ANON_KEY=your-anon-key
+   ```
+
+   **For mobile application** - Create `mobile/.env`:
+   ```env
+   EXPO_PUBLIC_SUPABASE_URL=your-project-url
+   EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
    ```
 
 ### 3. Run Database Migrations
@@ -106,6 +150,9 @@ This will apply all SQL migration scripts in the `supabase/migrations/` director
 
 ---
 
+## Technology Stack
+
+### Web Application
 - [Vite](https://vitejs.dev/)
 - [React](https://react.dev/)
 - [TypeScript](https://www.typescriptlang.org/)
@@ -113,69 +160,56 @@ This will apply all SQL migration scripts in the `supabase/migrations/` director
 - [shadcn/ui](https://ui.shadcn.com/)
 - [Supabase](https://supabase.com/) (backend, auth, storage, edge functions)
 
+### Mobile Application
+- [Expo](https://expo.dev/)
+- [React Native](https://reactnative.dev/)
+- [React Navigation](https://reactnavigation.org/)
+- [expo-location](https://docs.expo.dev/versions/latest/sdk/location/) (background GPS tracking)
+- [react-native-maps](https://github.com/react-native-maps/react-native-maps)
+- [Supabase](https://supabase.com/) (backend, auth, storage)
+
 ## Deployment
 
+### Web
 Deploy via [Lovable](https://lovable.dev/projects/floofmap): open the project and click Share → Publish.
 
-## Native Mobile App (iOS/Android)
-
-FloofMap can be built as a native mobile app using [Capacitor](https://capacitorjs.com/), enabling true background GPS tracking when the screen is off.
-
-### Prerequisites
-
-- **iOS**: Mac with Xcode installed
-- **Android**: Android Studio installed
-
-### Setup (one-time)
-
-```bash
-# 1. Clone the repo and install dependencies
-git clone https://github.com/paulbryan/floofmap
-cd floofmap
-npm install
-
-# 2. Add native platforms
-npx cap add ios
-npx cap add android
+### Mobile
+Build and submit to app stores:
+```sh
+cd mobile
+npx eas build --platform android
+npx eas build --platform ios
+npx eas submit
 ```
 
-### Build & Run
+## Background Location Tracking (Mobile)
 
-```bash
-# Build the web app
-npm run build
+## Background Location Tracking (Mobile)
 
-# Sync web assets to native platforms
-npx cap sync
+The mobile app includes **background GPS tracking** using Expo's location services. This allows the app to track your dog walks even when:
+- The app is in the background
+- The screen is locked
+- You switch to another app
 
-# Run on device or emulator
-npx cap run ios      # Opens in Xcode
-npx cap run android  # Opens in Android Studio
-```
+### How it works:
 
-### Enable Background Location
+1. When you start recording a walk, the app requests background location permissions
+2. A foreground service notification appears (on Android) indicating the walk is being tracked
+3. The app continues to record GPS coordinates at regular intervals
+4. All location data is stored and synced to Supabase when the walk is stopped
 
-For GPS tracking to work when the screen is off:
+### Permissions Required:
 
 **iOS:**
-1. Open the project in Xcode: `npx cap open ios`
-2. Select your target → Signing & Capabilities
-3. Click "+ Capability" → add "Background Modes"
-4. Enable "Location updates"
+- Location When In Use
+- Location Always (for background tracking)
 
 **Android:**
-The `@capacitor/geolocation` plugin automatically requests `ACCESS_BACKGROUND_LOCATION` on Android 10+. Users will be prompted to allow "all the time" location access.
+- ACCESS_FINE_LOCATION
+- ACCESS_BACKGROUND_LOCATION
+- FOREGROUND_SERVICE
 
-### Development with Hot Reload
-
-The `capacitor.config.ts` is pre-configured to load from the Lovable preview URL during development. To switch to local development:
-
-1. Comment out the `server.url` in `capacitor.config.ts`
-2. Run `npm run build && npx cap sync` after each change
-
-### Production Build
-
-For production, remove or comment out the `server` block in `capacitor.config.ts` so the app loads from the bundled `dist/` folder.
+These permissions are automatically configured in the app.json file.
 
 ## Custom Domains
 

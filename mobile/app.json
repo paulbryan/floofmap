@@ -1,0 +1,57 @@
+{
+  "expo": {
+    "name": "FloofMap",
+    "slug": "floofmap",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.floofmap.app",
+      "infoPlist": {
+        "UIBackgroundModes": ["location"],
+        "NSLocationWhenInUseUsageDescription": "FloofMap needs your location to record your dog walks.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "FloofMap needs your location to track your walks even when the app is in the background or the screen is locked.",
+        "NSLocationAlwaysUsageDescription": "FloofMap needs your location to track your walks even when the app is in the background or the screen is locked."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "package": "com.floofmap.app",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow FloofMap to use your location to track walks even when the app is in the background.",
+          "locationAlwaysPermission": "Allow FloofMap to use your location to track walks even when the app is in the background.",
+          "locationWhenInUsePermission": "Allow FloofMap to use your location to track walks.",
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
+        }
+      ]
+    ]
+  }
+}
