@@ -22,3 +22,19 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Expo
+.expo/
+.expo-shared/
+
+# Mobile
+mobile/dist/
+mobile/.expo/
+mobile/.expo-shared/
+mobile/android/
+mobile/ios/
+
+# Build artifacts
+*.apk
+*.aab
+*.ipa
