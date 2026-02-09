@@ -1,0 +1,118 @@
+.
+├── docs
+│   ├── dashboard.png
+│   ├── homepage.png
+│   ├── onboarding.png
+│   ├── profile.png
+│   ├── signin.png
+│   └── start-walk.png
+├── mobile
+│   ├── assets
+│   │   ├── adaptive-icon.png
+│   │   ├── favicon.png
+│   │   ├── icon.png
+│   │   └── splash-icon.png
+│   ├── src
+│   │   ├── components
+│   │   ├── config
+│   │   ├── navigation
+│   │   ├── screens
+│   │   ├── services
+│   │   └── types
+│   ├── App.tsx
+│   ├── README.md
+│   ├── app.json
+│   ├── index.ts
+│   ├── package-lock.json
+│   ├── package.json
+│   └── tsconfig.json
+├── supabase
+│   ├── functions
+│   │   ├── analyze-walk
+│   │   ├── detect-stops
+│   │   ├── fetch-pois
+│   │   ├── geocode
+│   │   ├── get-weather
+│   │   ├── health
+│   │   └── send-invite-email
+│   ├── migrations
+│   │   ├── 20260103050716_d218d03e-cc5b-45ed-b16f-34754d33e978.sql
+│   │   ├── 20260103060253_4c838173-fc22-4d33-a7d6-4b523f135206.sql
+│   │   ├── 20260103060516_44324c7e-9e9f-4f9f-92e4-02dc6c001947.sql
+│   │   ├── 20260103061206_ec4f71f3-7b1a-403c-8d61-039b8d533686.sql
+│   │   ├── 20260103061741_546a8e82-642d-4b2c-bbe1-57e636d29631.sql
+│   │   ├── 20260103062108_092e851b-a9c9-4329-8341-13f1aff7813b.sql
+│   │   ├── 20260103062512_c8f37fad-812a-42fc-929d-b7110e89698b.sql
+│   │   ├── 20260103063908_1f94576e-4357-48c8-8862-c3b78b9509a5.sql
+│   │   ├── 20260103065220_206bff70-0a5b-4774-8fe8-8212b76a6368.sql
+│   │   ├── 20260103085027_07ffac32-8787-4fbd-a0b0-269a68305ccd.sql
+│   │   ├── 20260103093631_7816706c-d4ac-409a-8ce8-6ca5b5fe00d4.sql
+│   │   ├── 20260103094317_3221c7b1-3d40-4038-91cc-861b0617682c.sql
+│   │   ├── 20260103094344_b816f28b-ae66-4695-81ea-c055767c3590.sql
+│   │   ├── 20260103095858_c04ce50f-1ec9-4cb2-b622-fecbb3b1dd85.sql
+│   │   ├── 20260103103514_3ff41aa7-5acd-489b-90e4-15db4dfb2882.sql
+│   │   ├── 20260103104849_ec36f7d9-22e8-423d-ab3d-cffd3c0894cf.sql
+│   │   ├── 20260104053709_75e3ef4d-0c46-492a-a57e-385f5d936f01.sql
+│   │   ├── 20260104053828_cb617169-532a-4fa8-b02e-7e5c12cfd816.sql
+│   │   ├── 20260104054127_72ca1d35-2979-49c0-8391-6f18f1001f80.sql
+│   │   ├── 20260104054609_f38e0c51-7ca2-4f09-a884-8bb2a77b571c.sql
+│   │   ├── 20260104054630_041c9e58-8e5b-4e78-9545-c831c7c6bd39.sql
+│   │   ├── 20260104070504_617f7fae-daa8-4501-a744-c137f8ea92ac.sql
+│   │   ├── 20260104070850_8f4a4e85-527f-472f-9ffc-ebebfea0ae76.sql
+│   │   ├── 20260104072830_6c65bb4d-a8f0-4623-ad37-a9464722c243.sql
+│   │   ├── 20260104073954_d22cc339-7da7-4ce7-b104-0f836e1a3663.sql
+│   │   ├── 20260104082617_12252e61-fc66-4af3-9c10-f43389f2b3ce.sql
+│   │   ├── 20260104083322_42589f71-2725-48df-887c-8207f10a1e53.sql
+│   │   ├── 20260106081915_994da676-ae43-4472-b26a-e6129da0ab78.sql
+│   │   └── 20260203062348_3cab7137-8428-48cd-bbd9-b26808762048.sql
+│   └── config.toml
+├── web
+│   ├── public
+│   │   ├── android-chrome-192x192.png
+│   │   ├── android-chrome-512x512.png
+│   │   ├── apple-touch-icon.png
+│   │   ├── favicon-16x16.png
+│   │   ├── favicon-32x32.png
+│   │   ├── favicon.ico
+│   │   ├── floofmap1200x630.png
+│   │   ├── floofmap624x209.png
+│   │   ├── placeholder.svg
+│   │   ├── robots.txt
+│   │   ├── site.webmanifest
+│   │   └── sitemap.xml
+│   ├── src
+│   │   ├── components
+│   │   ├── hooks
+│   │   ├── integrations
+│   │   ├── lib
+│   │   ├── pages
+│   │   ├── App.css
+│   │   ├── App.tsx
+│   │   ├── index.css
+│   │   ├── main.tsx
+│   │   └── vite-env.d.ts
+│   ├── bun.lockb
+│   ├── capacitor.config.ts
+│   ├── components.json
+│   ├── eslint.config.js
+│   ├── index.html
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── postcss.config.js
+│   ├── tailwind.config.ts
+│   ├── tsconfig.app.json
+│   ├── tsconfig.json
+│   ├── tsconfig.node.json
+│   └── vite.config.ts
+├── CODEOWNERS
+├── CONVERSION.md
+├── PROJECT_STRUCTURE.txt
+├── QUICKSTART.md
+├── README.md
+├── SECURITY_SUMMARY.md
+├── WARP.md
+├── agents.md
+├── package-lock.json
+└── package.json
+
+29 directories, 87 files
